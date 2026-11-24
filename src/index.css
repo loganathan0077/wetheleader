@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-navy: #20223E;
+  --primary-green: #91BD32;
+  --secondary-orange: #E98A32;
+  --secondary-blue: #2878B9;
+  --bg-color: #F5F7FA;
+  --white: #FFFFFF;
+}
+
+body {
+  background-color: #F5F7FA;
+  color: #20223E;
+  font-family: 'Inter', 'Noto Sans Tamil', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Custom font utilities */
+.font-tamil {
+  font-family: 'Noto Sans Tamil', sans-serif;
+}
+
+/* Print styles for ID Card and Confirmation */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-confirmation, #printable-confirmation * {
+    visibility: visible;
+  }
+  #printable-confirmation {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
