@@ -39,19 +39,37 @@ html, body {
   font-family: 'Noto Sans Tamil', sans-serif;
 }
 
-/* Print styles for ID Card and Confirmation */
+/* Print styles for CR80 Standard ATM / Debit Card ID */
 @media print {
+  @page {
+    size: auto;
+    margin: 10mm;
+  }
   body * {
-    visibility: hidden;
+    visibility: hidden !important;
   }
-  #printable-confirmation, #printable-confirmation * {
-    visibility: visible;
+  #printable-cr80-container,
+  #printable-cr80-container * {
+    visibility: visible !important;
   }
-  #printable-confirmation {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
+  #printable-cr80-container {
+    position: absolute !important;
+    left: 50% !important;
+    top: 20mm !important;
+    transform: translateX(-50%) !important;
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 15mm !important;
+    width: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  #printable-cr80-card-front,
+  #printable-cr80-card-back {
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
 
