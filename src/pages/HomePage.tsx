@@ -258,7 +258,117 @@ export const HomePage: React.FC<HomePageProps> = ({ onRegisterClick }) => {
       </section>
 
       {/* =========================================================================
-          3. HOW IT WORKS: 1-MINUTE REGISTRATION STEPS
+          3. COMMUNITY ACTIVITIES GALLERY
+         ========================================================================= */}
+      <section className="py-12 sm:py-16 bg-[#F5F7FA] border-y border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+          {/* Section Header */}
+          <div className="text-center max-w-3xl mx-auto mb-10">
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#E98A32]/15 text-[#20223E] text-xs font-black tracking-wider uppercase mb-2">
+              <Users className="w-3.5 h-3.5 text-[#E98A32]" />
+              <span>{isTamil ? 'சமூக செயல்பாடுகள்' : 'COMMUNITY ACTIVITIES'}</span>
+            </span>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#20223E] tracking-tight">
+              {isTamil ? 'கிணத்துக்கடவு மக்களின் கூட்டு பயணம்' : 'Together We Build Kinathukadavu'}
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 mt-2 max-w-2xl mx-auto">
+              {isTamil
+                ? 'ஒவ்வொரு கிராமத்திலும் நேர்மறையான மாற்றத்தை ஏற்படுத்தும் நமது சமூக மக்கள் ஒன்றிணைந்து செல்கின்றனர்.'
+                : 'Our community members across every village unite with smiles, solidarity and shared purpose.'}
+            </p>
+          </div>
+
+          {/* Gallery Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+
+            {/* Primary large photo (new upload) */}
+            <div className="md:col-span-7 relative rounded-2xl overflow-hidden shadow-lg border-2 border-white group">
+              <img
+                src="/community-activities.jpg"
+                alt="WE the Leader – Community Members Kinathukadavu"
+                className="w-full h-72 sm:h-80 md:h-96 object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#20223E]/90 via-[#20223E]/30 to-transparent flex flex-col justify-end p-5 sm:p-6">
+                <span className="text-[10px] font-black tracking-widest text-[#91BD32] uppercase">
+                  {isTamil ? 'கிணத்துக்கடவு சமூகம்' : 'KINATHUKADAVU COMMUNITY'}
+                </span>
+                <p className="text-sm sm:text-base font-bold text-white mt-0.5 font-tamil">
+                  {isTamil ? 'கிராம மக்கள் ஒற்றுமையே நமது வலிமை!' : 'Village Unity is Our Strength!'}
+                </p>
+              </div>
+            </div>
+
+            {/* Right column: original group photo + stat cards */}
+            <div className="md:col-span-5 flex flex-col gap-5">
+
+              {/* Original community group photo (existing asset) */}
+              <div className="relative rounded-2xl overflow-hidden shadow-lg border-2 border-white group flex-1">
+                <img
+                  src="/community-group.jpg"
+                  alt="WE the Leader – Village Leaders Kinathukadavu"
+                  className="w-full h-48 sm:h-56 object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#20223E]/85 via-transparent to-transparent flex flex-col justify-end p-4">
+                  <span className="text-[10px] font-black tracking-widest text-[#E98A32] uppercase">
+                    {isTamil ? 'ஒன்றிணைந்த தலைவர்கள்' : 'UNITED LEADERS'}
+                  </span>
+                  <p className="text-xs sm:text-sm font-bold text-white mt-0.5 font-tamil">
+                    {isTamil ? 'மாற்றத்தை ஒன்றாக உருவாக்குவோம்' : 'Creating change together'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Community stat badges */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 text-center">
+                  <p className="text-2xl font-black text-[#20223E]">100+</p>
+                  <p className="text-[11px] font-bold text-slate-500 mt-0.5 font-tamil">
+                    {isTamil ? 'கிராமங்கள் & வார்டுகள்' : 'Villages & Wards'}
+                  </p>
+                </div>
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 text-center">
+                  <p className="text-2xl font-black text-[#91BD32]">∞</p>
+                  <p className="text-[11px] font-bold text-slate-500 mt-0.5 font-tamil">
+                    {isTamil ? 'இலவச உறுப்பினர் பதிவு' : 'Free Membership'}
+                  </p>
+                </div>
+                <div className="bg-[#20223E] rounded-xl p-4 shadow-sm text-center">
+                  <p className="text-2xl font-black text-[#91BD32]">0</p>
+                  <p className="text-[11px] font-bold text-slate-400 mt-0.5 font-tamil">
+                    {isTamil ? 'அரசியல் சார்பு' : 'Political Bias'}
+                  </p>
+                </div>
+                <div className="bg-[#E98A32] rounded-xl p-4 shadow-sm text-center">
+                  <p className="text-2xl font-black text-white">2026</p>
+                  <p className="text-[11px] font-bold text-white/80 mt-0.5 font-tamil">
+                    {isTamil ? 'மாற்றத்தின் ஆண்டு' : 'Year of Change'}
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Join CTA below gallery */}
+          <div className="mt-8 text-center">
+            <button
+              onClick={onRegisterClick}
+              className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-[#20223E] hover:bg-[#2f325a] text-white font-black text-sm sm:text-base shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 cursor-pointer"
+            >
+              <Users className="w-4 h-4 text-[#91BD32]" />
+              <span>{isTamil ? 'இந்த இயக்கத்தில் இணைந்திடுங்கள்!' : 'Join This Community Movement!'}</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+      {/* =========================================================================
+          4. HOW IT WORKS: 1-MINUTE REGISTRATION STEPS
          ========================================================================= */}
       <section className="py-10 sm:py-14 bg-white border-y border-slate-200/80">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
