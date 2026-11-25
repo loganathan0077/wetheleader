@@ -76,9 +76,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onRegisterClick }) => {
                 </h1>
                 
                 {/* Supporting Line */}
-                <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-orange-50 border border-[#E98A32]/40 text-[#E98A32] font-black text-xs sm:text-sm md:text-base font-tamil">
+                <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-orange-50 border border-[#E98A32]/40 text-[#E98A32] font-black text-xs sm:text-sm md:text-base font-sans">
                   <span className="w-2 h-2 rounded-full bg-[#E98A32]" />
-                  <span>நம் மண், நம் மக்கள், நம் பொறுப்பு!</span>
+                  <span>"Be the Beginning of Change"</span>
                 </div>
               </div>
 
