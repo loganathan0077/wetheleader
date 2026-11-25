@@ -27,7 +27,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onRegisterClick, onAdminClic
           HERO POSTER BANNER: Authentic Village Photography Background
           - Smiling community members on the right side
           - Clean, bright text area on the left side
-          - Exact Tamil headline: மாற்றத்தின் தொடக்கமாக நாமாக இருப்போம்!
+          - Exact Tamil headline: மாற்றத்தின் தொடக்கமாக நாமே இருப்போம்!
           - Location: KINATHUKADAVU
           - Navy blue typography (#20223E) with Green (#91BD32) & Orange (#E98A32) accents
          ========================================================================= */}
@@ -85,7 +85,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onRegisterClick, onAdminClic
 
             {/* Exact Tamil Headline */}
             <h1 className="text-3xl sm:text-5xl lg:text-[3.25rem] font-black text-[#20223E] leading-[1.15] font-tamil tracking-tight mb-3">
-              மாற்றத்தின் தொடக்கமாக நாமாக இருப்போம்!
+              மாற்றத்தின் தொடக்கமாக நாமே இருப்போம்!
             </h1>
 
             {/* Sub-headline */}

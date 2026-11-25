@@ -105,7 +105,7 @@ export const CommunityPoster: React.FC<CommunityPosterProps> = ({ onClose, onReg
 
           {/* Exact Tamil Headline in Navy Blue typography */}
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#20223E] leading-[1.15] font-tamil tracking-tight">
-            மாற்றத்தின் தொடக்கமாக நாமாக இருப்போம்!
+            மாற்றத்தின் தொடக்கமாக நாமே இருப்போம்!
           </h1>
 
           {/* English translation / Meaning subtitle */}
