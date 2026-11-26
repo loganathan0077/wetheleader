@@ -37,11 +37,11 @@ TO anon, authenticated
 USING (true);
 
 -- 2. Allow administrative management of settings
--- Grants ALL to both anon and authenticated so admin updates are never blocked by RLS
+-- Grants ALL exclusively to authenticated administrators (requires valid Supabase Auth JWT)
 DROP POLICY IF EXISTS "Admin manage website_settings" ON public.website_settings;
 CREATE POLICY "Admin manage website_settings"
 ON public.website_settings FOR ALL
-TO anon, authenticated
+TO authenticated
 USING (true)
 WITH CHECK (true);
 

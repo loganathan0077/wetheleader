@@ -106,17 +106,17 @@ runTest('AdminSettings provides full Social Media management controls and live p
   assert(adminContent.includes('lastSavedTime'), 'Displays last saved timestamp');
 });
 
-// Test 9: Supabase migration includes social_links JSONB and non-blocking RLS policy
-runTest('Supabase schema & migration file include social_links column and corrected RLS policy', () => {
+// Test 9: Supabase migration includes social_links JSONB and secure RLS policy
+runTest('Supabase schema & migration file include social_links column and secured RLS policy', () => {
   const migrationContent = fs.readFileSync(path.join(rootDir, 'supabase/migration_website_settings.sql'), 'utf-8');
   const schemaContent = fs.readFileSync(path.join(rootDir, 'supabase/schema.sql'), 'utf-8');
 
   assert(migrationContent.includes('social_links JSONB'), 'Migration has social_links JSONB column');
   assert(migrationContent.includes('ALTER TABLE public.website_settings ADD COLUMN IF NOT EXISTS social_links JSONB'), 'Idempotent column addition');
-  assert(migrationContent.includes('TO anon, authenticated'), 'RLS policy allows anon and authenticated for admin management');
+  assert(migrationContent.includes('TO authenticated'), 'RLS policy restricts write access to authenticated admin');
 
   assert(schemaContent.includes('social_links JSONB'), 'schema.sql has social_links JSONB column');
-  assert(schemaContent.includes('TO anon, authenticated'), 'schema.sql allows anon, authenticated');
+  assert(schemaContent.includes('TO authenticated'), 'schema.sql restricts write access to authenticated admin');
 });
 
 console.log(`\n================================================================`);

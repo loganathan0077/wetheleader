@@ -237,11 +237,18 @@ export const memberService = {
     return newMember;
   },
 
-  // Get member by ID
+  // Get member by ID (Public verification or admin access)
   async getMemberById(id: string): Promise<Member | null> {
     if (isSupabaseConfigured && supabase) {
       try {
-        const { data, error } = await supabase.from('members').select('*').eq('id', id).single();
+        // 1. Try public verification RPC (safe non-sensitive fields)
+        const { data: rpcData, error: rpcErr } = await supabase.rpc('verify_member_public', { p_id: id });
+        if (!rpcErr && rpcData && rpcData.length > 0) {
+          return rpcData[0] as Member;
+        }
+
+        // 2. Direct select (allowed for authenticated admin)
+        const { data, error } = await supabase.from('members').select('*').eq('id', id).maybeSingle();
         if (!error && data) return data as Member;
       } catch {}
     }
@@ -269,9 +276,20 @@ export const memberService = {
       return { success: false, error: 'Please enter your Membership ID (e.g., WTL-2026-00001) or Date of Birth.' };
     }
 
-    // 1. Supabase check
+    // 1. Supabase check (Uses secure SECURITY DEFINER RPC to prevent table scraping)
     if (isSupabaseConfigured && supabase) {
       try {
+        // Try secure dual-factor RPC
+        const { data: rpcData, error: rpcErr } = await supabase.rpc('verify_member_for_download', {
+          p_mobile: cleanPhone,
+          p_id_or_dob: cleanId
+        });
+
+        if (!rpcErr && rpcData && rpcData.length > 0) {
+          return { success: true, member: rpcData[0] as Member };
+        }
+
+        // Fallback query if RPC is pending deployment
         const { data, error } = await supabase
           .from('members')
           .select('*')

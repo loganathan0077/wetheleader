@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
-import { ShieldCheck, Lock, Mail, AlertCircle, ArrowLeft } from 'lucide-react';
+import { ShieldCheck, Lock, User, AlertCircle, ArrowLeft } from 'lucide-react';
 
 interface AdminLoginPageProps {
   onBackToHome: () => void;
@@ -86,17 +86,17 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onBackToHome, on
               </div>
             )}
 
-            {/* Email Field */}
+            {/* Username / Email Field */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 {t('adminEmailLabel')}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Mail className="w-4 h-4" />
+                  <User className="w-4 h-4" />
                 </div>
                 <input
-                  type="email"
+                  type="text"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -144,13 +144,6 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onBackToHome, on
                 </>
               )}
             </button>
-
-            {/* Helper Credentials Hint for convenience */}
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center text-[11px] text-slate-500 space-y-0.5">
-              <span className="font-bold text-slate-700 block">Single Admin Access</span>
-              <span>Default: <code className="bg-slate-200 px-1 py-0.5 rounded text-[#20223E] font-mono">admin@wetheleader.org</code> / <code className="bg-slate-200 px-1 py-0.5 rounded text-[#20223E] font-mono">admin123</code></span>
-            </div>
-
           </form>
 
         </div>

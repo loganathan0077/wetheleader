@@ -39,7 +39,7 @@ Official mobile-first web application for **WE the Leader**, Kinathukadavu, Coim
    - Sensitive identification (Aadhaar, Voter ID) strictly excluded from confirmation card.
 
 6. **Single Admin Portal:**
-   - Secure login using email and password (`admin@wetheleader.org` / `admin123` or cloud Supabase Auth).
+   - Secure login using credentials (`kkd@wetheleader.com` / `KKD@wetheleader2026` or cloud Supabase Auth).
    - Exactly one admin account — no complex permissions or unnecessary roles.
 
 7. **Admin Dashboard (Dynamic Statistics):**
@@ -92,8 +92,8 @@ npm run preview
 
 ## 🔐 Admin Credentials
 
-- **Email:** `admin@wetheleader.org`
-- **Password:** `admin123`
+- **Username / Email:** `kkd@wetheleader.com`
+- **Password:** `KKD@wetheleader2026`
 
 ---
 

@@ -251,11 +251,11 @@ ON public.website_settings FOR SELECT
 TO anon, authenticated
 USING (true);
 
--- 2. Allow admin management (both anon and authenticated so admin updates are never blocked)
+-- 2. Authenticated administrators can manage settings (Secure RLS)
 DROP POLICY IF EXISTS "Admin manage website_settings" ON public.website_settings;
 CREATE POLICY "Admin manage website_settings"
 ON public.website_settings FOR ALL
-TO anon, authenticated
+TO authenticated
 USING (true)
 WITH CHECK (true);
 

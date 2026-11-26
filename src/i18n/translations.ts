@@ -179,8 +179,8 @@ export const translations = {
     // Admin Authentication
     adminLoginTitle: "Admin Portal",
     adminLoginSubtitle: "Secure sign-in for WE the Leader administrator",
-    adminEmailLabel: "Email Address",
-    adminEmailPlaceholder: "admin@wetheleader.org",
+    adminEmailLabel: "Username or Email",
+    adminEmailPlaceholder: "Enter your username or email",
     adminPasswordLabel: "Password",
     adminPasswordPlaceholder: "Enter your password",
     adminLoginBtn: "Sign In",
@@ -494,8 +494,8 @@ export const translations = {
     // Admin Authentication
     adminLoginTitle: "நிர்வாகி தளம்",
     adminLoginSubtitle: "WE the Leader நிர்வாகிக்கான பாதுகாப்பான உள்நுழைவு",
-    adminEmailLabel: "மின்னஞ்சல் முகவரி",
-    adminEmailPlaceholder: "admin@wetheleader.org",
+    adminEmailLabel: "பயனர் பெயர் அல்லது மின்னஞ்சல் முகவரி",
+    adminEmailPlaceholder: "பயனர் பெயர் அல்லது மின்னஞ்சலை உள்ளிடவும்",
     adminPasswordLabel: "கடவுச்சொல்",
     adminPasswordPlaceholder: "உங்கள் கடவுச்சொல்லை உள்ளிடவும்",
     adminLoginBtn: "உள்நுழைக",

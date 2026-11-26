@@ -6,7 +6,7 @@ interface AuthContextType {
   adminUser: AdminUser | null;
   isAdminLoggedIn: boolean;
   isLoading: boolean;
-  login: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
+  login: (emailOrUser: string, pass: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
 }
 
@@ -19,81 +19,142 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check initial auth state
-    const initAuth = async () => {
-      try {
-        if (isSupabaseConfigured && supabase) {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user) {
+    const client = supabase;
+    // 1. If Supabase is configured, use cryptographically verified Supabase Auth sessions
+    if (isSupabaseConfigured && client) {
+      const checkSession = async () => {
+        try {
+          const { data: { session }, error } = await client.auth.getSession();
+          if (!error && session?.user) {
             setAdminUser({
               id: session.user.id,
-              email: session.user.email || 'admin@wetheleader.org',
+              email: session.user.email || 'Admin',
               name: 'WE the Leader Admin'
             });
-            setIsLoading(false);
-            return;
+          } else {
+            // Untrusted client storage must be cleared if no valid Supabase session exists
+            setAdminUser(null);
+            localStorage.removeItem(ADMIN_STORAGE_KEY);
           }
+        } catch (err) {
+          console.error('Supabase Auth verification error:', err);
+          setAdminUser(null);
+          localStorage.removeItem(ADMIN_STORAGE_KEY);
+        } finally {
+          setIsLoading(false);
         }
+      };
 
-        // Check local storage session
+      checkSession();
+
+      // Listen for token refresh or logout events from Supabase Auth
+      const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
+        if (session?.user) {
+          setAdminUser({
+            id: session.user.id,
+            email: session.user.email || 'Admin',
+            name: 'WE the Leader Admin'
+          });
+        } else {
+          setAdminUser(null);
+          localStorage.removeItem(ADMIN_STORAGE_KEY);
+        }
+        setIsLoading(false);
+      });
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+
+    // 2. Offline / Local Development fallback (strictly when Supabase is not configured)
+    try {
+      if (import.meta.env.DEV) {
         const local = localStorage.getItem(ADMIN_STORAGE_KEY);
         if (local) {
           setAdminUser(JSON.parse(local));
         }
-      } catch (err) {
-        console.error('Auth initialization error:', err);
-      } finally {
-        setIsLoading(false);
       }
-    };
-
-    initAuth();
+    } catch (err) {
+      console.warn('Local session read error:', err);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const login = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
-    const trimmedEmail = email.trim().toLowerCase();
+  const login = async (emailOrUser: string, pass: string): Promise<{ success: boolean; error?: string }> => {
+    const rawInput = (emailOrUser || '').trim();
+    if (!rawInput || !pass) {
+      return { success: false, error: 'Please enter both username/email and password.' };
+    }
 
-    // 1. Try Supabase Auth if configured
-    if (isSupabaseConfigured && supabase) {
+    // Standardize input: if user enters shorthand like 'kkd', format as email
+    const fullEmail = rawInput.includes('@') ? rawInput.toLowerCase() : `${rawInput.toLowerCase()}@wetheleader.com`;
+
+    // 1. PRIMARY: Authenticate via Supabase Auth (server-side bcrypt / argon2 encryption)
+    const client = supabase;
+    if (isSupabaseConfigured && client) {
       try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: trimmedEmail,
+        const { data, error } = await client.auth.signInWithPassword({
+          email: fullEmail,
           password: pass
         });
 
-        if (!error && data.user) {
+        if (error) {
+          console.error('Supabase authentication failed:', error.message);
+          return { 
+            success: false, 
+            error: error.message || 'Invalid username or password.' 
+          };
+        }
+
+        if (data.user) {
           const user: AdminUser = {
             id: data.user.id,
-            email: data.user.email || trimmedEmail,
+            email: data.user.email || fullEmail,
             name: 'WE the Leader Admin'
           };
           setAdminUser(user);
           localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(user));
           return { success: true };
         }
-      } catch (err) {
-        console.warn('Supabase Auth error, checking local fallback:', err);
+      } catch (err: any) {
+        console.error('Supabase auth network error:', err);
+        return { 
+          success: false, 
+          error: `Authentication server error: ${err.message || 'Please check your connection.'}` 
+        };
       }
     }
 
-    // 2. Local Fallback Admin Authentication (admin@wetheleader.org / admin123)
-    if (
-      (trimmedEmail === 'admin@wetheleader.org' || trimmedEmail === 'admin') && 
-      (pass === 'admin123' || pass === 'wetheleader2026')
-    ) {
-      const user: AdminUser = {
-        id: 'wtl-admin-01',
-        email: 'admin@wetheleader.org',
-        name: 'WE the Leader Admin'
+    // 2. OFFLINE DEVELOPMENT MODE ONLY
+    // Strictly allowed in local development (import.meta.env.DEV) when Supabase is not configured
+    if (import.meta.env.DEV && !isSupabaseConfigured) {
+      // Local dev testing credentials
+      const validDevUser = fullEmail === 'kkd@wetheleader.com' || fullEmail === 'admin@wetheleader.org';
+      const validDevPass = pass === 'KKD@wetheleader2026' || pass === 'admin123';
+
+      if (validDevUser && validDevPass) {
+        const user: AdminUser = {
+          id: 'dev-admin-local',
+          email: fullEmail,
+          name: 'WE the Leader Admin (Local Dev Mode)'
+        };
+        setAdminUser(user);
+        localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(user));
+        return { success: true };
+      }
+
+      return { 
+        success: false, 
+        error: 'Invalid dev credentials. Please check your username and password.' 
       };
-      setAdminUser(user);
-      localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(user));
-      return { success: true };
     }
 
+    // Production environment without Supabase configuration is strictly blocked
     return { 
       success: false, 
-      error: 'Invalid credentials. Please use admin@wetheleader.org / admin123 or your Supabase credentials.' 
+      error: 'Authentication service is unavailable. Please configure Supabase in your environment.' 
     };
   };
 
@@ -101,7 +162,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isSupabaseConfigured && supabase) {
       try {
         await supabase.auth.signOut();
-      } catch {}
+      } catch (err) {
+        console.warn('Error signing out of Supabase:', err);
+      }
     }
     setAdminUser(null);
     localStorage.removeItem(ADMIN_STORAGE_KEY);
