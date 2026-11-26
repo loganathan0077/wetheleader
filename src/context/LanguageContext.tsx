@@ -12,13 +12,22 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => {
-    const saved = localStorage.getItem('wtl_preferred_lang');
-    return (saved === 'ta' || saved === 'en') ? saved : 'en';
+    try {
+      const saved = localStorage.getItem('wtl_preferred_lang');
+      // Tamil is the default for first-time visitors; manual selections ('en' or 'ta') are remembered
+      return (saved === 'ta' || saved === 'en') ? saved : 'ta';
+    } catch {
+      return 'ta';
+    }
   });
 
   useEffect(() => {
-    localStorage.setItem('wtl_preferred_lang', language);
-    document.documentElement.lang = language;
+    try {
+      localStorage.setItem('wtl_preferred_lang', language);
+      document.documentElement.lang = language;
+    } catch {
+      // Safely ignore storage quotas or restricted iframe permissions
+    }
   }, [language]);
 
   const setLanguage = (lang: Language) => {
