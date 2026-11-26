@@ -1156,9 +1156,12 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">{t('dobLabel')}</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    {t('dobLabel')} <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="date"
+                    required
                     value={formData.date_of_birth}
                     onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
                     className="w-full p-2.5 text-xs rounded-xl border border-slate-300"

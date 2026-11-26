@@ -249,6 +249,73 @@ export const memberService = {
     return local.find(m => m.id === id || m.membership_number === id) || null;
   },
 
+  /**
+   * Secure Member Verification for ID Card Download.
+   * Requires TWO-FACTOR validation (Registered Mobile Number + Membership ID or Date of Birth)
+   * to ensure members can only access and download their own personal card.
+   */
+  async verifyAndGetMemberForDownload(
+    mobileNumber: string,
+    membershipIdOrDob: string
+  ): Promise<{ success: boolean; member?: Member; error?: string }> {
+    const cleanPhone = (mobileNumber || '').trim().replace(/[^0-9]/g, '');
+    const cleanId = (membershipIdOrDob || '').trim();
+
+    if (!cleanPhone || cleanPhone.length < 10) {
+      return { success: false, error: 'Please enter a valid 10-digit registered mobile number.' };
+    }
+
+    if (!cleanId) {
+      return { success: false, error: 'Please enter your Membership ID (e.g., WTL-2026-00001) or Date of Birth.' };
+    }
+
+    // 1. Supabase check
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('members')
+          .select('*')
+          .eq('mobile_number', cleanPhone);
+
+        if (!error && data && data.length > 0) {
+          const matched = (data as Member[]).find(m => {
+            const matchId = m.membership_number?.trim().toLowerCase() === cleanId.toLowerCase();
+            const matchDob = m.date_of_birth === cleanId ||
+              (m.date_of_birth && new Date(m.date_of_birth).toISOString().split('T')[0] === cleanId);
+            return matchId || matchDob;
+          });
+
+          if (matched) {
+            return { success: true, member: matched };
+          }
+        }
+      } catch (err) {
+        console.warn('Supabase member verification error, checking local store:', err);
+      }
+    }
+
+    // 2. Local fallback check
+    const local = getLocalMembers();
+    const matched = local.find(m => {
+      const matchPhone = (m.mobile_number || '').replace(/[^0-9]/g, '') === cleanPhone;
+      if (!matchPhone) return false;
+
+      const matchId = m.membership_number?.trim().toLowerCase() === cleanId.toLowerCase();
+      const matchDob = m.date_of_birth === cleanId ||
+        (m.date_of_birth && new Date(m.date_of_birth).toISOString().split('T')[0] === cleanId);
+      return matchId || matchDob;
+    });
+
+    if (matched) {
+      return { success: true, member: matched };
+    }
+
+    return {
+      success: false,
+      error: 'No registered membership found matching these verification credentials. Please check your mobile number and Membership ID or Date of Birth.'
+    };
+  },
+
   // Get all members for Admin
   async getAllMembers(): Promise<Member[]> {
     if (isSupabaseConfigured && supabase) {

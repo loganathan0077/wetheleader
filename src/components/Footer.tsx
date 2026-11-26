@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { MapPin, ShieldCheck, Heart } from 'lucide-react';
+import { MapPin, ShieldCheck } from 'lucide-react';
+import { getAdminPortalUrl } from '../utils/subdomain';
+import { settingsService, WebsiteSettings, SETTINGS_UPDATED_EVENT } from '../services/settingsService';
+import { SocialIcons } from './SocialIcons';
 
 interface FooterProps {
   onNavigate: (view: string) => void;
@@ -8,6 +11,53 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   const { t } = useLanguage();
+  const [settings, setSettings] = useState<WebsiteSettings>(() => settingsService.getSettings());
+
+  useEffect(() => {
+    // 1. Initial load
+    settingsService.loadSettings().then(s => setSettings(s)).catch(() => {});
+
+    // 2. Custom event listener (within same tab)
+    const handleSettingsUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<WebsiteSettings>;
+      if (customEvent.detail) {
+        setSettings(customEvent.detail);
+      } else {
+        setSettings(settingsService.getSettings());
+      }
+    };
+    window.addEventListener(SETTINGS_UPDATED_EVENT, handleSettingsUpdate);
+
+    // 3. Storage event listener (across browser tabs)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'wtl_website_settings' && e.newValue) {
+        try {
+          setSettings(JSON.parse(e.newValue));
+        } catch {
+          setSettings(settingsService.getSettings());
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    // 4. Window focus refetch (when tab gains focus)
+    const handleFocus = () => {
+      settingsService.loadSettings().then(s => setSettings(s)).catch(() => {});
+    };
+    window.addEventListener('focus', handleFocus);
+
+    // 5. Supabase Realtime channel subscription
+    const unsubscribe = settingsService.subscribeToSettings((updated) => {
+      setSettings(updated);
+    });
+
+    return () => {
+      window.removeEventListener(SETTINGS_UPDATED_EVENT, handleSettingsUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('focus', handleFocus);
+      unsubscribe();
+    };
+  }, []);
 
   return (
     <footer className="bg-[#20223E] text-white border-t border-slate-700/60 mt-auto">
@@ -16,7 +66,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           
           {/* Logo & Tagline */}
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 text-center sm:text-left">
-            <div className="bg-white p-1 rounded-md">
+            <div className="bg-white p-1 rounded-md shadow-xs flex-shrink-0">
               <img 
                 src="/logo.svg" 
                 alt="WE the Leader" 
@@ -39,13 +89,18 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          {/* Mission Note */}
-          <div className="text-center text-xs text-slate-300">
-            <p className="leading-relaxed">
+          {/* Social Media Links & Mission Note */}
+          <div className="flex flex-col items-center justify-center text-center gap-2.5">
+            {settings.show_social_in_footer !== false && settings.social_links && (
+              <SocialIcons 
+                socialLinks={settings.social_links} 
+                variant="dark" 
+                size="md" 
+                className="justify-center"
+              />
+            )}
+            <p className="text-xs text-slate-300 leading-relaxed max-w-xs">
               Kinathukadavu grassroots community membership portal.
-            </p>
-            <p className="text-[11px] text-slate-400 mt-1">
-              Coimbatore District, Tamil Nadu, India.
             </p>
           </div>
 
@@ -53,18 +108,19 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           <div className="flex flex-col sm:flex-row items-center justify-center md:justify-end gap-3 text-xs">
             <button
               onClick={() => onNavigate('register')}
-              className="text-[#91BD32] font-semibold hover:underline"
+              className="text-[#91BD32] font-semibold hover:underline cursor-pointer"
             >
               {t('navRegister')}
             </button>
             <span className="hidden sm:inline text-slate-500">•</span>
-            <button
-              onClick={() => onNavigate('admin-login')}
-              className="text-slate-300 hover:text-white flex items-center gap-1"
+            <a
+              href={getAdminPortalUrl()}
+              className="text-slate-300 hover:text-white flex items-center gap-1 transition-colors"
+              title="WE The Leader Admin Portal"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-[#E98A32]" />
-              {t('adminPortalLink')}
-            </button>
+              <span>{t('adminPortalLink')}</span>
+            </a>
           </div>
 
         </div>

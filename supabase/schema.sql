@@ -160,3 +160,42 @@ WITH CHECK (true);
 
 -- Grant execute permissions on RPC to anon and authenticated
 GRANT EXECUTE ON FUNCTION public.generate_next_membership_number() TO anon, authenticated;
+
+-- ------------------------------------------------------------------------------
+-- TABLE 4: website_settings (Admin-editable Homepage & Contact Configuration)
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.website_settings (
+    key TEXT PRIMARY KEY DEFAULT 'homepage_contact',
+    download_id_button_text TEXT NOT NULL DEFAULT 'DOWNLOAD ID CARD',
+    contact_section_heading TEXT NOT NULL DEFAULT 'Need Help? Contact Us',
+    contact_designation TEXT NOT NULL DEFAULT 'Kinathukadavu Admin',
+    whatsapp_number TEXT NOT NULL DEFAULT '9750855623',
+    country_code TEXT NOT NULL DEFAULT '+91',
+    whatsapp_button_text TEXT NOT NULL DEFAULT 'Contact on WhatsApp',
+    whatsapp_message TEXT NOT NULL DEFAULT 'Hello We The Leader, I would like to know more about membership and joining the Kinathukadavu team.',
+    show_download_id_button BOOLEAN NOT NULL DEFAULT true,
+    show_contact_section BOOLEAN NOT NULL DEFAULT true,
+    show_whatsapp_button BOOLEAN NOT NULL DEFAULT true,
+    show_social_in_footer BOOLEAN NOT NULL DEFAULT true,
+    show_social_in_contact BOOLEAN NOT NULL DEFAULT true,
+    social_links JSONB NOT NULL DEFAULT '[]'::jsonb,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.website_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public read website_settings"
+ON public.website_settings FOR SELECT
+TO anon, authenticated
+USING (true);
+
+CREATE POLICY "Admin manage website_settings"
+ON public.website_settings FOR ALL
+TO anon, authenticated
+USING (true)
+WITH CHECK (true);
+
+INSERT INTO public.website_settings (key)
+VALUES ('homepage_contact')
+ON CONFLICT (key) DO NOTHING;
+

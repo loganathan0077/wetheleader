@@ -131,7 +131,12 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
       errors.mobile_number = t('valMobileInvalid');
     }
 
-    // 3. Aadhaar Number (if provided, must be 12 digits)
+    // 3. Mandatory Date of Birth (required for dual-factor ID card download & verification)
+    if (!formData.date_of_birth || !formData.date_of_birth.trim()) {
+      errors.date_of_birth = t('valDobRequired');
+    }
+
+    // 4. Aadhaar Number (if provided, must be 12 digits)
     if (formData.aadhaar_number && formData.aadhaar_number.trim()) {
       const cleanAadhaar = formData.aadhaar_number.replace(/\D/g, '');
       if (cleanAadhaar.length !== 12) {
@@ -338,6 +343,37 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                 {language === 'ta' ? 'எ.கா. 98421XXXXX (10 இலக்கங்கள்)' : 'e.g. 98421XXXXX (10 digits)'}
               </p>
             </div>
+
+            {/* Date of Birth (Mandatory for secure ID download and verification) */}
+            <div>
+              <label className="block text-sm font-bold text-[#20223E] mb-1.5">
+                {t('dobLabel')} <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <input
+                  type="date"
+                  required
+                  value={formData.date_of_birth}
+                  onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
+                  className={`w-full pl-11 pr-4 py-3 text-base font-medium rounded-xl border bg-[#F5F7FA] focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+                    fieldErrors.date_of_birth 
+                      ? 'border-red-400 focus:ring-red-300' 
+                      : 'border-slate-300 focus:ring-[#91BD32] focus:border-[#91BD32]'
+                  }`}
+                />
+              </div>
+              {fieldErrors.date_of_birth && (
+                <p className="mt-1 text-xs text-red-600 font-medium">{fieldErrors.date_of_birth}</p>
+              )}
+              <p className="mt-1 text-[11px] text-slate-500">
+                {language === 'ta' 
+                  ? 'அடையாள அட்டை பாதுகாப்பு மற்றும் பதிவிறக்க சரிபார்ப்பிற்கு தேவை.' 
+                  : 'Required for secure membership verification and ID card download.'}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -396,40 +432,22 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
             </div>
           </div>
 
-          {/* Date of Birth & Gender Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Date of Birth (date picker) */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                {t('dobLabel')}
-              </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  value={formData.date_of_birth}
-                  onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-[#F5F7FA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#91BD32]"
-                />
-              </div>
-            </div>
-
-            {/* Gender */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                {t('genderLabel')}
-              </label>
-              <select
-                value={formData.gender}
-                onChange={(e) => handleInputChange('gender', e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-[#F5F7FA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#91BD32]"
-              >
-                <option value="">-- {t('genderSelect')} --</option>
-                <option value="Male">{t('genderMale')}</option>
-                <option value="Female">{t('genderFemale')}</option>
-                <option value="Other">{t('genderOther')}</option>
-                <option value="Prefer not to say">{t('genderPreferNot')}</option>
-              </select>
-            </div>
+          {/* Gender */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              {t('genderLabel')}
+            </label>
+            <select
+              value={formData.gender}
+              onChange={(e) => handleInputChange('gender', e.target.value)}
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-[#F5F7FA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#91BD32]"
+            >
+              <option value="">-- {t('genderSelect')} --</option>
+              <option value="Male">{t('genderMale')}</option>
+              <option value="Female">{t('genderFemale')}</option>
+              <option value="Other">{t('genderOther')}</option>
+              <option value="Prefer not to say">{t('genderPreferNot')}</option>
+            </select>
           </div>
         </div>
 

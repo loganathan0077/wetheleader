@@ -45,7 +45,7 @@ export const translations = {
 
     // Registration Form
     regPageTitle: "Membership Registration",
-    regPageSubtitle: "Please fill in your details to join WE the Leader. Only Name and Mobile Number are required.",
+    regPageSubtitle: "Please fill in your details to join WE the Leader. Name, Mobile Number, and Date of Birth are mandatory.",
     mandatorySection: "Mandatory Information",
     personalInfoSection: "Personal Information",
     addressSection: "Address & Location Details",
@@ -153,6 +153,7 @@ export const translations = {
     // Form Validations
     valNameRequired: "Please enter your full name.",
     valMobileRequired: "Please enter your 10-digit mobile number.",
+    valDobRequired: "Please enter your date of birth (required for secure ID Card retrieval).",
     valMobileInvalid: "Please enter a valid 10-digit Indian mobile number (6-9 followed by 9 digits).",
     valAadhaarInvalid: "Aadhaar number must be 12 digits.",
     valConsentRequired: "You must provide consent to submit your membership registration.",
@@ -359,7 +360,7 @@ export const translations = {
 
     // Registration Form
     regPageTitle: "உறுப்பினர் பதிவு",
-    regPageSubtitle: "WE the Leader அமைப்பில் இணைய உங்கள் விவரங்களை உள்ளிடவும். பெயர் மற்றும் கைபேசி எண் மட்டுமே கட்டாயமானது.",
+    regPageSubtitle: "WE the Leader அமைப்பில் இணைய உங்கள் விவரங்களை உள்ளிடவும். பெயர், கைபேசி எண் மற்றும் பிறந்த தேதி கட்டாயமானது.",
     mandatorySection: "கட்டாய விவரங்கள்",
     personalInfoSection: "தனிப்பட்ட விவரங்கள்",
     addressSection: "முகவரி மற்றும் இருப்பிட விவரங்கள்",
@@ -467,6 +468,7 @@ export const translations = {
     // Form Validations
     valNameRequired: "தயவுசெய்து உங்கள் முழு பெயரை உள்ளிடவும்.",
     valMobileRequired: "தயவுசெய்து உங்கள் 10 இலக்க கைபேசி எண்ணை உள்ளிடவும்.",
+    valDobRequired: "தயவுசெய்து உங்கள் பிறந்த தேதியை உள்ளிடவும் (அடையாள அட்டை பெற தேவை).",
     valMobileInvalid: "சரியான 10 இலக்க இந்திய கைபேசி எண்ணை உள்ளிடவும் (6-9 இல் தொடங்கும் 10 இலக்கங்கள்).",
     valAadhaarInvalid: "ஆதார் எண் 12 இலக்கங்களாக இருக்க வேண்டும்.",
     valConsentRequired: "உறுப்பினர் பதிவை சமர்ப்பிக்க நீங்கள் சம்மதம் தெரிவிக்க வேண்டும்.",

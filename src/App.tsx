@@ -6,6 +6,7 @@ import { Footer } from './components/Footer';
 import { HomePage } from './pages/HomePage';
 import { RegistrationPage } from './pages/RegistrationPage';
 import { RegistrationSuccessPage } from './pages/RegistrationSuccessPage';
+import { DownloadIdCardPage } from './pages/DownloadIdCardPage';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { AdminLayout } from './components/AdminLayout';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -15,6 +16,7 @@ import { ReportsExportPage } from './pages/admin/ReportsExportPage';
 import { AdminSettings } from './pages/admin/AdminSettings';
 import { Member } from './types';
 import { memberService } from './services/memberService';
+import { isAdminHost, getPublicSiteUrl, getAdminPortalUrl } from './utils/subdomain';
 import { ShieldCheck, CheckCircle2, X, AlertCircle, MapPin, Calendar, User } from 'lucide-react';
 
 export const AppContent: React.FC = () => {
@@ -24,11 +26,43 @@ export const AppContent: React.FC = () => {
   const [adminTab, setAdminTab] = useState('dashboard');
   const [selectedMemberForDetail, setSelectedMemberForDetail] = useState<Member | null>(null);
 
+  // Check if current host is the admin subdomain (admin.wetheleader.online)
+  const isAdminDomain = isAdminHost();
+
+  // Redirect public production visits to /admin to the dedicated admin subdomain
+  useEffect(() => {
+    if (!isAdminDomain && typeof window !== 'undefined') {
+      const pathname = window.location.pathname.toLowerCase();
+      const isProd = window.location.hostname.includes('wetheleader.online');
+      if (isProd && (pathname === '/admin' || pathname.startsWith('/admin/'))) {
+        window.location.href = getAdminPortalUrl();
+      }
+    }
+  }, [isAdminDomain]);
+
+  // Sync tab with URL hash or pathname for admin subdomain persistence on page refresh
+  useEffect(() => {
+    if (isAdminDomain && typeof window !== 'undefined') {
+      const hash = window.location.hash.replace(/^#\/?/, '').toLowerCase();
+      const validTabs = ['dashboard', 'all-members', 'volunteers', 'add-member', 'reports', 'excel-export', 'settings'];
+      if (hash && validTabs.includes(hash)) {
+        setAdminTab(hash);
+      }
+    }
+  }, [isAdminDomain]);
+
+  const handleAdminTabChange = (tab: string) => {
+    setAdminTab(tab);
+    if (isAdminDomain && typeof window !== 'undefined') {
+      window.history.replaceState(null, '', `/#${tab}`);
+    }
+  };
+
   // Verification modal state for QR code scan
   const [verifiedMember, setVerifiedMember] = useState<Member | null>(null);
   const [invalidVerifyId, setInvalidVerifyId] = useState<string | null>(null);
 
-  // Check URL query params for ?verify=WTL-2026-XXXXX
+  // Check URL query params for ?verify=WTL-2026-XXXXX or ?action=download-id
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const verifyId = params.get('verify');
@@ -40,6 +74,10 @@ export const AppContent: React.FC = () => {
           setInvalidVerifyId(verifyId);
         }
       });
+    }
+    const action = params.get('action');
+    if (action === 'download-id') {
+      setCurrentView('download-id');
     }
   }, []);
 
@@ -59,16 +97,38 @@ export const AppContent: React.FC = () => {
   // View member detail directly from dashboard
   const handleViewMemberFromDashboard = (member: Member) => {
     setSelectedMemberForDetail(member);
-    setAdminTab('all-members');
+    handleAdminTabChange('all-members');
   };
 
-  // If viewing admin screens and logged in
-  if (currentView.startsWith('admin') && isAdminLoggedIn) {
+  // =========================================================================
+  // SCENARIO 1: ADMIN SUBDOMAIN (admin.wetheleader.online)
+  // Dedicated, isolated admin portal environment
+  // =========================================================================
+  if (isAdminDomain) {
+    // If not authenticated, require admin login
+    if (!isAdminLoggedIn) {
+      return (
+        <div className="flex flex-col min-h-screen bg-[#F5F7FA]">
+          <main className="flex-1">
+            <AdminLoginPage 
+              onBackToHome={() => {
+                window.location.href = getPublicSiteUrl();
+              }} 
+              onLoginSuccess={() => {
+                setAdminTab('dashboard');
+              }} 
+            />
+          </main>
+        </div>
+      );
+    }
+
+    // Authenticated admin portal view
     return (
-      <AdminLayout activeTab={adminTab} onTabChange={setAdminTab}>
+      <AdminLayout activeTab={adminTab} onTabChange={handleAdminTabChange}>
         {adminTab === 'dashboard' && (
           <AdminDashboard 
-            onNavigate={(tab) => setAdminTab(tab)} 
+            onNavigate={(tab) => handleAdminTabChange(tab)} 
             onViewMember={handleViewMemberFromDashboard} 
           />
         )}
@@ -97,27 +157,10 @@ export const AppContent: React.FC = () => {
     );
   }
 
-  // Admin login screen
-  if (currentView === 'admin-login') {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Header 
-          currentView={currentView} 
-          onNavigate={(view) => setCurrentView(view)} 
-          isAdminLoggedIn={isAdminLoggedIn} 
-        />
-        <main className="flex-1">
-          <AdminLoginPage 
-            onBackToHome={() => setCurrentView('home')} 
-            onLoginSuccess={() => setCurrentView('admin-dashboard')} 
-          />
-        </main>
-        <Footer onNavigate={(view) => setCurrentView(view)} />
-      </div>
-    );
-  }
-
-  // Public Screens (Home, Register, Success)
+  // =========================================================================
+  // SCENARIO 2: PUBLIC WEBSITE (www.wetheleader.online / wetheleader.online)
+  // Clean public experience without Admin Portal header button
+  // =========================================================================
   return (
     <div className="flex flex-col min-h-screen">
       <Header 
@@ -133,7 +176,19 @@ export const AppContent: React.FC = () => {
               setCurrentView('register');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            onAdminClick={() => setCurrentView('admin-login')}
+            onDownloadIdClick={() => {
+              setCurrentView('download-id');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        )}
+
+        {currentView === 'download-id' && (
+          <DownloadIdCardPage 
+            onBackToHome={() => {
+              setCurrentView('home');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
         )}
 

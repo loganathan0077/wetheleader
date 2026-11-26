@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { settingsService, WebsiteSettings, buildWhatsAppUrl, SETTINGS_UPDATED_EVENT } from '../services/settingsService';
+import { SocialIcons } from '../components/SocialIcons';
 import { 
   ArrowRight, 
   CheckCircle2, 
@@ -12,18 +14,71 @@ import {
   GraduationCap, 
   HeartHandshake, 
   Building2,
-  ChevronRight
+  ChevronRight,
+  CreditCard,
+  MessageCircle,
+  Phone,
+  User
 } from 'lucide-react';
 
 interface HomePageProps {
   onRegisterClick: () => void;
-  onAdminClick: () => void;
+  onDownloadIdClick?: () => void;
+  onAdminClick?: () => void;
 }
 
-export const HomePage: React.FC<HomePageProps> = ({ onRegisterClick }) => {
+export const HomePage: React.FC<HomePageProps> = ({ onRegisterClick, onDownloadIdClick }) => {
   const { t, language } = useLanguage();
 
   const isTamil = language === 'ta';
+
+  // Live website settings managed by Admin
+  const [settings, setSettings] = useState<WebsiteSettings>(() => settingsService.getSettings());
+
+  useEffect(() => {
+    // Load fresh settings from Supabase/cache
+    settingsService.loadSettings().then(s => setSettings(s)).catch(() => {});
+
+    // 1. Listen for live updates broadcast by admin panel (same tab)
+    const handleSettingsUpdate = (e: any) => {
+      if (e.detail) {
+        setSettings(e.detail);
+      } else {
+        setSettings(settingsService.getSettings());
+      }
+    };
+    window.addEventListener(SETTINGS_UPDATED_EVENT, handleSettingsUpdate);
+
+    // 2. Storage event listener (across browser tabs)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'wtl_website_settings' && e.newValue) {
+        try {
+          setSettings(JSON.parse(e.newValue));
+        } catch {
+          setSettings(settingsService.getSettings());
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    // 3. Window focus refetch (when tab gains focus)
+    const handleFocus = () => {
+      settingsService.loadSettings().then(s => setSettings(s)).catch(() => {});
+    };
+    window.addEventListener('focus', handleFocus);
+
+    // 4. Supabase Realtime channel subscription
+    const unsubscribe = settingsService.subscribeToSettings((updated) => {
+      setSettings(updated);
+    });
+
+    return () => {
+      window.removeEventListener(SETTINGS_UPDATED_EVENT, handleSettingsUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('focus', handleFocus);
+      unsubscribe();
+    };
+  }, []);
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-140px)] overflow-x-hidden">
@@ -33,7 +88,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onRegisterClick }) => {
           - Left: Logo, Headlines, Supporting line, Location, Description, CTA
           - Right: Authentic Village Community Group Photograph (Crisp & Natural)
          ========================================================================= */}
-      <section className="relative bg-white border-b border-slate-200 overflow-hidden">
+      <section id="about" className="relative bg-white border-b border-slate-200 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             
@@ -89,11 +144,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onRegisterClick }) => {
                   : 'Welcome to WE the Leader. Connecting and empowering residents across every village and ward in Kinathukadavu through grassroots community solidarity and leadership.'}
               </p>
 
-              {/* Primary Call to Action Button */}
+              {/* Primary Call to Action Button (Prominent hero CTA) */}
               <div className="pt-1">
                 <button
                   onClick={onRegisterClick}
-                  className="w-full sm:w-auto px-7 sm:px-9 py-3.5 sm:py-4 rounded-xl bg-[#91BD32] hover:bg-[#80a82b] text-[#20223E] font-black text-base sm:text-lg tracking-wide shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2.5 group cursor-pointer"
+                  className="w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-4.5 rounded-xl bg-[#91BD32] hover:bg-[#80a82b] text-[#20223E] font-black text-base sm:text-lg tracking-wide shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2.5 group cursor-pointer"
                 >
                   <span>{isTamil ? 'இன்றே இணைந்திடுங்கள்!' : 'REGISTER NOW / இன்றே இணைந்திடுங்கள்!'}</span>
                   <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1 flex-shrink-0" />
@@ -155,7 +210,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onRegisterClick }) => {
       {/* =========================================================================
           2. OUR FOCUS AREAS / CORE MISSION (Replaces duplicate poster display)
          ========================================================================= */}
-      <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+      <section id="pillars" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="text-center max-w-3xl mx-auto mb-10">
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#91BD32]/15 text-[#20223E] text-xs font-black tracking-wider uppercase mb-2">
             <Sparkles className="w-3.5 h-3.5 text-[#91BD32]" />
@@ -260,7 +315,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onRegisterClick }) => {
       {/* =========================================================================
           3. COMMUNITY ACTIVITIES GALLERY
          ========================================================================= */}
-      <section className="py-12 sm:py-16 bg-[#F5F7FA] border-y border-slate-200">
+      <section id="activities" className="py-12 sm:py-16 bg-[#F5F7FA] border-y border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           {/* Section Header */}
@@ -282,17 +337,17 @@ export const HomePage: React.FC<HomePageProps> = ({ onRegisterClick }) => {
           {/* Gallery Grid */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
 
-            {/* Primary large photo (new upload) */}
+            {/* Primary large photo (Green village welfare & sapling planting) */}
             <div className="md:col-span-7 relative rounded-2xl overflow-hidden shadow-lg border-2 border-white group">
               <img
-                src="/community-activities.jpg"
-                alt="WE the Leader – Community Members Kinathukadavu"
+                src="/community-activity-1.jpg"
+                alt="WE the Leader – Village Tree Planting & Welfare Kinathukadavu"
                 className="w-full h-72 sm:h-80 md:h-96 object-cover object-center transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#20223E]/90 via-[#20223E]/30 to-transparent flex flex-col justify-end p-5 sm:p-6">
                 <span className="text-[10px] font-black tracking-widest text-[#91BD32] uppercase">
-                  {isTamil ? 'கிணத்துக்கடவு சமூகம்' : 'KINATHUKADAVU COMMUNITY'}
+                  {isTamil ? 'பசுமை கிணத்துக்கடவு' : 'GREEN KINATHUKADAVU'}
                 </span>
                 <p className="text-sm sm:text-base font-bold text-white mt-0.5 font-tamil">
                   {isTamil ? 'கிராம மக்கள் ஒற்றுமையே நமது வலிமை!' : 'Village Unity is Our Strength!'}
@@ -300,15 +355,15 @@ export const HomePage: React.FC<HomePageProps> = ({ onRegisterClick }) => {
               </div>
             </div>
 
-            {/* Right column: original group photo + stat cards */}
+            {/* Right column: community leadership gathering + stat cards */}
             <div className="md:col-span-5 flex flex-col gap-5">
 
-              {/* Original community group photo (existing asset) */}
+              {/* Community leadership discussion photo */}
               <div className="relative rounded-2xl overflow-hidden shadow-lg border-2 border-white group flex-1">
                 <img
-                  src="/community-group.jpg"
-                  alt="WE the Leader – Village Leaders Kinathukadavu"
-                  className="w-full h-48 sm:h-56 object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                  src="/community-activity-2.jpg"
+                  alt="WE the Leader – Grassroots Leadership Meeting Kinathukadavu"
+                  className="w-full h-48 sm:h-56 object-cover object-center transition-transform duration-500 group-hover:scale-105"
                   loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#20223E]/85 via-transparent to-transparent flex flex-col justify-end p-4">
@@ -391,7 +446,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onRegisterClick }) => {
                 {isTamil ? 'விவரங்களை உள்ளிடவும்' : 'Enter Basic Details'}
               </h3>
               <p className="text-xs text-slate-600">
-                {isTamil ? 'பெயர் மற்றும் கைபேசி எண் மட்டுமே கட்டாயம். பிற விவரங்கள் விருப்பத்தேர்வு.' : 'Only Name and Mobile Number are required. No login or OTP needed.'}
+                {isTamil ? 'பெயர், கைபேசி எண் மற்றும் பிறந்த தேதி மட்டுமே கட்டாயம்.' : 'Name, Mobile Number, and Date of Birth are mandatory.'}
               </p>
             </div>
 
@@ -424,7 +479,117 @@ export const HomePage: React.FC<HomePageProps> = ({ onRegisterClick }) => {
       </section>
 
       {/* =========================================================================
-          4. FINAL CALL TO ACTION BANNER (Full-width mobile friendly)
+          5. HOMEPAGE CONTACT SECTION: CONTACT KINATHUKADAVU ADMIN & WHATSAPP
+         ========================================================================= */}
+      {settings.show_contact_section && (
+        <section id="contact" className="py-12 sm:py-16 bg-[#F5F7FA] border-t border-slate-200">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#91BD32]/15 text-[#20223E] text-xs font-black tracking-wider uppercase mb-2">
+              <MessageCircle className="w-3.5 h-3.5 text-[#91BD32]" />
+              <span>{settings.contact_section_heading}</span>
+            </div>
+
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#20223E] tracking-tight">
+              {settings.contact_section_heading}
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-xl mx-auto">
+              {isTamil
+                ? 'உறுப்பினர் சேர்க்கை, அடையாள அட்டை அல்லது பிற விபரங்களுக்கு எங்கள் நிர்வாக குழுவை தொடர்பு கொள்ளவும்.'
+                : 'Reach out to our Kinathukadavu administrative team directly via WhatsApp or phone for any questions or support.'}
+            </p>
+
+            <div className="mt-8 bg-white rounded-3xl p-6 sm:p-8 shadow-lg border border-slate-200 max-w-lg mx-auto">
+              <div className="space-y-4">
+                
+                {/* Contact Designation & Direct Text Link */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 bg-[#F5F7FA] rounded-2xl border border-slate-200 text-left">
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <div className="w-10 h-10 rounded-xl bg-white text-[#20223E] border border-slate-200 flex items-center justify-center flex-shrink-0 shadow-xs">
+                      <User className="w-5 h-5 text-[#2878B9]" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                        Official Coordinator
+                      </span>
+                      <span className="text-sm font-extrabold text-[#20223E]">
+                        {settings.contact_designation}
+                      </span>
+                    </div>
+                  </div>
+
+                  <a
+                    href={buildWhatsAppUrl(settings.country_code, settings.whatsapp_number, settings.whatsapp_message)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-bold text-[#2878B9] hover:underline flex items-center gap-1 self-center sm:self-auto cursor-pointer"
+                  >
+                    <span>Contact Kinathukadavu Admin</span>
+                  </a>
+                </div>
+
+                {/* Direct Phone / WhatsApp Info */}
+                <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
+                  <div className="flex items-center gap-2.5 text-left">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                      <Phone className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                        WhatsApp Contact
+                      </span>
+                      <span className="font-mono text-sm font-black text-[#20223E]">
+                        {settings.country_code} {settings.whatsapp_number}
+                      </span>
+                    </div>
+                  </div>
+
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                    Active
+                  </span>
+                </div>
+
+                {/* WhatsApp Action Button with WhatsApp Icon */}
+                {settings.show_whatsapp_button && (
+                  <div className="pt-2">
+                    <a
+                      href={buildWhatsAppUrl(settings.country_code, settings.whatsapp_number, settings.whatsapp_message)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-3.5 px-6 rounded-2xl bg-[#25D366] hover:bg-[#20ba59] text-white font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current flex-shrink-0">
+                        <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.06-2.029-.49-1.637-.674-2.67-2.34-2.752-2.45-.083-.11-.649-.863-.649-1.644 0-.781.408-1.164.553-1.32.145-.155.316-.194.422-.194.106 0 .212 0 .306.006.103.006.241-.039.377.288.144.348.494 1.206.536 1.294.043.088.072.19.014.305-.058.115-.088.188-.175.289-.088.102-.185.228-.264.306-.089.088-.182.183-.078.361.103.178.461.761 1.002 1.242.697.62 1.282.812 1.464.903.182.091.288.078.396-.045.107-.123.461-.537.585-.721.124-.184.248-.155.416-.093.168.062 1.066.502 1.25.594.183.091.306.136.35.212.045.076.045.441-.099.846z"/>
+                      </svg>
+                      <span>{settings.whatsapp_button_text}</span>
+                    </a>
+                  </div>
+                )}
+
+                {/* Dynamic Social Media Links in Contact Section */}
+                {settings.show_social_in_contact !== false && settings.social_links && (
+                  <div className="pt-3 border-t border-slate-100 flex flex-col items-center justify-center">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                      Connect with WE the Leader
+                    </span>
+                    <SocialIcons 
+                      socialLinks={settings.social_links} 
+                      variant="light" 
+                      size="md" 
+                      className="justify-center"
+                    />
+                  </div>
+                )}
+
+              </div>
+            </div>
+
+          </div>
+        </section>
+      )}
+
+      {/* =========================================================================
+          6. FINAL CALL TO ACTION BANNER (Full-width mobile friendly)
          ========================================================================= */}
       <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full">
         <div className="bg-[#20223E] text-white rounded-3xl p-6 sm:p-10 lg:p-12 shadow-xl border-4 border-[#91BD32] text-center relative overflow-hidden">
