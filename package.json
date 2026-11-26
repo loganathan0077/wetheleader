@@ -4,10 +4,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "dev:admin": "vite --port 3001 --host",
+    "dev": "vite --host 0.0.0.0 --port 3000",
+    "dev:admin": "vite --host 0.0.0.0 --port 3001",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview --host 0.0.0.0 --port 3000"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
