@@ -21,7 +21,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
-  const { language, toggleLanguage, t } = useLanguage();
+  const { language, toggleLanguage, setLanguage, t } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
   const [settings, setSettings] = useState<WebsiteSettings>(() => settingsService.getSettings());
 
@@ -148,10 +148,10 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
               </div>
             </button>
 
-            {/* Navigation, Language Switcher & Hamburger Menu */}
-            <div className="flex items-center gap-1.5 sm:gap-3">
-              {/* Quick Navigation */}
-              <nav className="flex items-center gap-1 sm:gap-2">
+            {/* Right: Desktop Navigation, Language Switcher & Hamburger Menu */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Quick Navigation (Desktop Only - Hidden on Mobile) */}
+              <nav className="hidden md:flex items-center gap-1 sm:gap-2">
                 <button
                   onClick={() => onNavigate('home')}
                   className={`p-1.5 sm:px-3 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors flex items-center gap-1.5 cursor-pointer ${
@@ -178,24 +178,24 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
                 </button>
               </nav>
 
-              {/* Language Switcher Pill */}
+              {/* Language Switcher Pill (Desktop Only - Hidden on Mobile) */}
               <button
                 onClick={toggleLanguage}
-                className="flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 text-xs sm:text-sm font-bold text-white transition-all shadow-sm flex-shrink-0 cursor-pointer"
+                className="hidden md:flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 text-xs sm:text-sm font-bold text-white transition-all shadow-sm flex-shrink-0 cursor-pointer"
                 title="Switch Language / மொழியை மாற்றவும்"
               >
                 <Globe className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#91BD32]" />
                 <span>{language === 'en' ? 'தமிழ்' : 'English'}</span>
               </button>
 
-              {/* Three-Line Hamburger Icon Button (☰) */}
+              {/* Three-Line Hamburger Icon Button (☰) - Always visible, right-aligned on mobile */}
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="p-1.5 sm:p-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-white transition-all shadow-sm flex items-center justify-center cursor-pointer ml-0.5 sm:ml-1 group"
+                className="p-2 sm:p-2 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/30 border border-white/20 text-white transition-all shadow-sm flex items-center justify-center cursor-pointer group"
                 aria-label="Toggle Navigation Menu"
                 title="Menu / பட்டி"
               >
-                <Menu className="w-5 h-5 text-[#91BD32] group-hover:scale-110 transition-transform" />
+                <Menu className="w-5 h-5 sm:w-5 sm:h-5 text-[#91BD32] group-hover:scale-110 transition-transform" />
               </button>
             </div>
 
@@ -249,8 +249,83 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
         </div>
 
         {/* Drawer Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5">
           
+          {/* SECTION 0: MOBILE QUICK ACTIONS (Language Toggle & Main Navigation) */}
+          <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+            {/* Language Switcher */}
+            <div>
+              <div className="text-[10px] font-black tracking-wider text-slate-400 uppercase mb-1.5 flex items-center justify-between">
+                <span className="flex items-center gap-1">
+                  <Globe className="w-3.5 h-3.5 text-[#2878B9]" />
+                  <span>{language === 'ta' ? 'மொழியைத் தேர்ந்தெடுக்கவும்' : 'Language / மொழி'}</span>
+                </span>
+                <span className="text-[10px] font-semibold text-slate-500">
+                  {language === 'ta' ? 'தமிழ் தீவிரத்தில் உள்ளது' : 'English Active'}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 bg-slate-200/70 p-1 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setLanguage('ta')}
+                  className={`py-2 px-3 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    language === 'ta'
+                      ? 'bg-[#20223E] text-white shadow-xs'
+                      : 'text-slate-700 hover:text-[#20223E] hover:bg-white/60'
+                  }`}
+                >
+                  <span>தமிழ்</span>
+                  {language === 'ta' && <span className="w-1.5 h-1.5 rounded-full bg-[#91BD32]" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLanguage('en')}
+                  className={`py-2 px-3 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    language === 'en'
+                      ? 'bg-[#20223E] text-white shadow-xs'
+                      : 'text-slate-700 hover:text-[#20223E] hover:bg-white/60'
+                  }`}
+                >
+                  <span>English</span>
+                  {language === 'en' && <span className="w-1.5 h-1.5 rounded-full bg-[#91BD32]" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Navigation: Home & Register */}
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200">
+              <button
+                onClick={() => {
+                  onNavigate('home');
+                  setMenuOpen(false);
+                }}
+                className={`py-2.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  currentView === 'home'
+                    ? 'bg-[#20223E] text-white shadow-xs'
+                    : 'bg-white hover:bg-slate-100 text-[#20223E] border border-slate-200'
+                }`}
+              >
+                <HomeIcon className="w-4 h-4 text-[#91BD32]" />
+                <span>{t('navHome')}</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  onNavigate('register');
+                  setMenuOpen(false);
+                }}
+                className={`py-2.5 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer ${
+                  currentView === 'register'
+                    ? 'bg-[#91BD32] text-[#20223E] ring-2 ring-[#20223E]'
+                    : 'bg-[#91BD32] hover:bg-[#80a82b] text-[#20223E]'
+                }`}
+              >
+                <UserPlus className="w-4 h-4 text-[#20223E]" />
+                <span>{language === 'ta' ? 'உறுப்பினர் பதிவு' : 'Register Now'}</span>
+              </button>
+            </div>
+          </div>
+
           {/* SECTION 1: MEMBERSHIP */}
           <div>
             <div className="text-[11px] font-black tracking-wider text-slate-400 uppercase mb-2 flex items-center gap-1.5">

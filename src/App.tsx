@@ -162,7 +162,7 @@ export const AppContent: React.FC = () => {
   // Clean public experience without Admin Portal header button
   // =========================================================================
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-[#F5F7FA] text-[#20223E]">
       <Header 
         currentView={currentView} 
         onNavigate={(view) => setCurrentView(view)} 
