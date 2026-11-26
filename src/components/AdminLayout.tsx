@@ -12,7 +12,8 @@ import {
   Menu, 
   X, 
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  HeartHandshake
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -30,6 +31,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ activeTab, onTabChange
   const menuItems = [
     { id: 'dashboard', label: t('menuDashboard'), icon: LayoutDashboard },
     { id: 'all-members', label: t('menuAllMembers'), icon: Users },
+    { id: 'volunteers', label: t('menuVolunteers'), icon: HeartHandshake },
     { id: 'add-member', label: t('menuAddMember'), icon: UserPlus },
     { id: 'reports', label: t('menuReports'), icon: FileText },
     { id: 'excel-export', label: t('menuExcelExport'), icon: FileSpreadsheet },

@@ -10,7 +10,8 @@ import {
   Building, 
   Calendar, 
   ShieldAlert, 
-  CheckCircle2 
+  CheckCircle2,
+  HeartHandshake
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -82,6 +83,7 @@ export const ReportsExportPage: React.FC = () => {
       'Mobile / கைபேசி எண்': m.mobile_number,
       'District / மாவட்டம்': m.district || 'Coimbatore',
       'Village / கிராமம்': m.village_name || '',
+      'Street / தெரு': m.street_name || '',
       'Ward / வார்டு': m.ward_number || '',
       'Gender / பாலினம்': m.gender || '',
       'Date of Birth / பிறந்த தேதி': m.date_of_birth ? m.date_of_birth.split('T')[0] : '',
@@ -91,7 +93,25 @@ export const ReportsExportPage: React.FC = () => {
     exportToExcel(exportData, `WE_The_Leader_All_Members_${new Date().toISOString().split('T')[0]}`);
   };
 
-  // 2. Export Village Summary
+  // 2. Export Volunteers & Skills Report
+  const handleExportVolunteersReport = () => {
+    const exportData = members.map(m => ({
+      'Membership ID / உறுப்பினர் எண்': m.membership_number,
+      'Full Name / முழு பெயர்': m.full_name,
+      'Village / கிராமம்': m.village_name || '',
+      'Street / தெரு': m.street_name || '',
+      'Ward / வார்டு': m.ward_number || '',
+      'Occupation / தொழில்': m.occupation || '',
+      'Blood Group / இரத்த வகை': m.blood_group || '',
+      'Volunteer Willingness / தன்னார்வ விருப்பம்': m.volunteer_willingness || '',
+      'Blood Donation Willingness / இரத்த தான விருப்பம்': m.blood_donation_willingness || '',
+      'Skills / திறன்கள்': m.skills?.join(', ') || '',
+      'Other Skills / பிற திறன்கள்': m.other_skills || ''
+    }));
+    exportToExcel(exportData, `WE_The_Leader_Volunteers_Report_${new Date().toISOString().split('T')[0]}`, 'Volunteers');
+  };
+
+  // 3. Export Village Summary
   const handleExportVillageReport = () => {
     const exportData = villageBreakdown.map(([village, count]) => ({
       'Village Name / கிராமத்தின் பெயர்': village,
@@ -214,6 +234,26 @@ export const ReportsExportPage: React.FC = () => {
             </div>
             <p className="text-xs text-slate-500 mt-1">
               {monthlyBreakdown.length} {language === 'ta' ? 'மாதங்கள்' : 'Active Months'}
+            </p>
+          </div>
+        </button>
+
+        {/* Volunteer & Skills Directory Export */}
+        <button
+          onClick={handleExportVolunteersReport}
+          disabled={loading || members.length === 0}
+          className="p-5 rounded-2xl bg-[#91BD32]/10 hover:bg-[#91BD32]/20 text-[#20223E] border border-[#91BD32]/50 shadow-sm flex flex-col justify-between transition-transform hover:-translate-y-1 cursor-pointer text-left group"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-[#20223E] uppercase tracking-wider">Volunteers</span>
+            <HeartHandshake className="w-6 h-6 text-[#20223E]" />
+          </div>
+          <div className="mt-4">
+            <div className="text-base font-bold text-[#20223E] leading-tight">
+              {t('exportVolunteersBtn')}
+            </div>
+            <p className="text-xs text-slate-600 mt-1">
+              {members.length} {language === 'ta' ? 'உறுப்பினர்கள்' : 'Registered Volunteers'}
             </p>
           </div>
         </button>

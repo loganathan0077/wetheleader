@@ -29,8 +29,14 @@ CREATE TABLE IF NOT EXISTS public.members (
     address TEXT,
     district TEXT NOT NULL DEFAULT 'Coimbatore',
     village_name TEXT,
+    street_name TEXT,
     ward_number TEXT,
     occupation TEXT,
+    blood_group TEXT,
+    volunteer_willingness TEXT,
+    blood_donation_willingness TEXT,
+    skills TEXT[] DEFAULT '{}',
+    other_skills TEXT,
     voter_id_number TEXT,
     aadhaar_number TEXT,
     profile_photo_url TEXT,
@@ -45,7 +51,12 @@ CREATE TABLE IF NOT EXISTS public.members (
 CREATE INDEX IF NOT EXISTS idx_members_mobile ON public.members (mobile_number);
 CREATE INDEX IF NOT EXISTS idx_members_membership_number ON public.members (membership_number);
 CREATE INDEX IF NOT EXISTS idx_members_village ON public.members (village_name);
+CREATE INDEX IF NOT EXISTS idx_members_street ON public.members (street_name);
 CREATE INDEX IF NOT EXISTS idx_members_ward ON public.members (ward_number);
+CREATE INDEX IF NOT EXISTS idx_members_blood_group ON public.members (blood_group);
+CREATE INDEX IF NOT EXISTS idx_members_volunteer ON public.members (volunteer_willingness);
+CREATE INDEX IF NOT EXISTS idx_members_blood_donation ON public.members (blood_donation_willingness);
+CREATE INDEX IF NOT EXISTS idx_members_skills ON public.members USING GIN (skills);
 CREATE INDEX IF NOT EXISTS idx_members_reg_date ON public.members (registration_date DESC);
 
 -- ------------------------------------------------------------------------------

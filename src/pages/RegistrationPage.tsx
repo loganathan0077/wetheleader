@@ -12,8 +12,10 @@ import {
   CheckCircle2, 
   AlertCircle, 
   Lock, 
+  Droplet,
+  HeartHandshake,
   Sparkles,
-  ArrowRight
+  Check
 } from 'lucide-react';
 
 interface RegistrationPageProps {
@@ -21,7 +23,68 @@ interface RegistrationPageProps {
   onCancel: () => void;
 }
 
-export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess, onCancel }) => {
+// Structured skill categories matching exact requirements
+export const SKILL_CATEGORIES = [
+  {
+    id: 'media',
+    categoryKey: 'skillCatMedia' as const,
+    skills: [
+      { id: 'Photography', labelKey: 'skillPhotography' as const },
+      { id: 'Videography', labelKey: 'skillVideography' as const },
+      { id: 'Video Editing', labelKey: 'skillVideoEditing' as const },
+      { id: 'Photo Editing', labelKey: 'skillPhotoEditing' as const },
+      { id: 'Graphic Designing', labelKey: 'skillGraphicDesigning' as const },
+      { id: 'Poster Designing', labelKey: 'skillPosterDesigning' as const },
+      { id: 'Social Media Management', labelKey: 'skillSocialMedia' as const },
+      { id: 'Content Writing', labelKey: 'skillContentWriting' as const },
+      { id: 'Website Development', labelKey: 'skillWebDev' as const },
+      { id: 'Digital Marketing', labelKey: 'skillDigitalMarketing' as const },
+    ]
+  },
+  {
+    id: 'event',
+    categoryKey: 'skillCatEvent' as const,
+    skills: [
+      { id: 'Event Organisation', labelKey: 'skillEventOrg' as const },
+      { id: 'Stage Management', labelKey: 'skillStageMgmt' as const },
+      { id: 'Public Speaking', labelKey: 'skillPublicSpeaking' as const },
+      { id: 'Anchoring / Hosting', labelKey: 'skillAnchoring' as const },
+      { id: 'Sound & Music Management', labelKey: 'skillSoundMusic' as const },
+      { id: 'Crowd Coordination', labelKey: 'skillCrowdCoord' as const },
+    ]
+  },
+  {
+    id: 'community',
+    categoryKey: 'skillCatCommunity' as const,
+    skills: [
+      { id: 'Tree Plantation', labelKey: 'skillTreePlant' as const },
+      { id: 'Environmental Cleaning', labelKey: 'skillEnvClean' as const },
+      { id: 'School Activities', labelKey: 'skillSchoolAct' as const },
+      { id: 'Women\'s Activities', labelKey: 'skillWomenAct' as const },
+      { id: 'Sports Activities', labelKey: 'skillSportsAct' as const },
+      { id: 'Blood Donation Camp Coordination', labelKey: 'skillBloodCampCoord' as const },
+      { id: 'Community Awareness Programmes', labelKey: 'skillCommAwareness' as const },
+    ]
+  },
+  {
+    id: 'professional',
+    categoryKey: 'skillCatProfessional' as const,
+    skills: [
+      { id: 'Teaching', labelKey: 'skillTeaching' as const },
+      { id: 'Medical / Healthcare', labelKey: 'skillMedicalHealth' as const },
+      { id: 'Legal Knowledge', labelKey: 'skillLegalKnowledge' as const },
+      { id: 'Accounting', labelKey: 'skillAccounting' as const },
+      { id: 'Electrical Work', labelKey: 'skillElectricalWork' as const },
+      { id: 'Driving', labelKey: 'skillDriving' as const },
+      { id: 'Translation', labelKey: 'skillTranslation' as const },
+      { id: 'Administration', labelKey: 'skillAdministration' as const },
+    ]
+  }
+];
+
+export const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'] as const;
+
+export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess }) => {
   const { t, language } = useLanguage();
 
   const [formData, setFormData] = useState<MemberFormData>({
@@ -32,8 +95,14 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess, o
     address: '',
     district: 'Coimbatore',
     village_name: '',
+    street_name: '',
     ward_number: '',
     occupation: '',
+    blood_group: '',
+    volunteer_willingness: '',
+    blood_donation_willingness: '',
+    skills: [],
+    other_skills: '',
     voter_id_number: '',
     aadhaar_number: '',
     profile_photo_url: '',
@@ -92,6 +161,17 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess, o
     if (errorMessage) setErrorMessage(null);
   };
 
+  // Toggle multi-select skill checkbox
+  const handleToggleSkill = (skillId: string) => {
+    setFormData(prev => {
+      const exists = prev.skills.includes(skillId);
+      const newSkills = exists 
+        ? prev.skills.filter(s => s !== skillId)
+        : [...prev.skills, skillId];
+      return { ...prev, skills: newSkills };
+    });
+  };
+
   // Profile Photo Upload handling
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -120,7 +200,6 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess, o
     setErrorMessage(null);
 
     if (!validateForm()) {
-      // Scroll to top of error
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -187,7 +266,9 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess, o
       {/* Registration Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
         
-        {/* SECTION 1: MANDATORY FIELDS */}
+        {/* ----------------------------------------------------------------- */}
+        {/* SECTION 1: MANDATORY INFORMATION                                  */}
+        {/* ----------------------------------------------------------------- */}
         <div className="bg-white rounded-2xl shadow-sm border-2 border-[#91BD32]/40 p-5 sm:p-7">
           <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
             <h2 className="text-lg font-bold text-[#20223E] flex items-center gap-2">
@@ -260,12 +341,14 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess, o
           </div>
         </div>
 
-        {/* SECTION 2: OPTIONAL FIELDS */}
+        {/* ----------------------------------------------------------------- */}
+        {/* SECTION 2: PERSONAL INFORMATION                                   */}
+        {/* ----------------------------------------------------------------- */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-7 space-y-5">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <h2 className="text-base font-bold text-[#20223E] flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-[#2878B9]" />
-              {t('optionalSection')}
+              {t('personalInfoSection')}
             </h2>
             <span className="text-xs text-slate-400 font-medium">
               {t('optional')}
@@ -315,7 +398,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess, o
 
           {/* Date of Birth & Gender Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Date of Birth */}
+            {/* Date of Birth (date picker) */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
                 {t('dobLabel')}
@@ -348,8 +431,23 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess, o
               </select>
             </div>
           </div>
+        </div>
 
-          {/* Village Name & Ward Number Grid (Direct Free Text as requested!) */}
+        {/* ----------------------------------------------------------------- */}
+        {/* SECTION 3: ADDRESS INFORMATION                                    */}
+        {/* ----------------------------------------------------------------- */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-7 space-y-5">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h2 className="text-base font-bold text-[#20223E] flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#E98A32]" />
+              {t('addressSection')}
+            </h2>
+            <span className="text-xs text-slate-400 font-medium">
+              {t('optional')}
+            </span>
+          </div>
+
+          {/* Village Name & Street Name Grid (Village and Street must be separate fields) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Village Name */}
             <div>
@@ -364,10 +462,30 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess, o
                 className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-[#F5F7FA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#91BD32]"
               />
               <p className="mt-1 text-[10px] text-slate-400">
-                {language === 'ta' ? 'தமிழ் அல்லது ஆங்கிலத்தில் எழுதலாம்' : 'Enter village name in English or Tamil'}
+                {language === 'ta' ? 'தமிழ் அல்லது ஆங்கிலத்தில் எழுதலாம்' : 'Supports Tamil and English input'}
               </p>
             </div>
 
+            {/* Street Name */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                {t('streetLabel')}
+              </label>
+              <input
+                type="text"
+                value={formData.street_name}
+                onChange={(e) => handleInputChange('street_name', e.target.value)}
+                placeholder={t('streetPlaceholder')}
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-[#F5F7FA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#91BD32]"
+              />
+              <p className="mt-1 text-[10px] text-slate-400">
+                {language === 'ta' ? 'தெரு அல்லது பகுதி பெயர்' : 'Separate street / locality field'}
+              </p>
+            </div>
+          </div>
+
+          {/* Ward Number & District Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Ward Number */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -381,22 +499,22 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess, o
                 className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-[#F5F7FA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#91BD32]"
               />
             </div>
-          </div>
 
-          {/* District (Defaulted to Coimbatore, displayed as Coimbatore) */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              {t('districtLabel')}
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                readOnly
-                value={t('defaultDistrict')}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-slate-100 text-slate-600 font-semibold cursor-not-allowed"
-              />
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400 text-xs">
-                (Fixed)
+            {/* District (fixed to Coimbatore) */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                {t('districtLabel')}
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  readOnly
+                  value={t('defaultDistrict')}
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-slate-100 text-slate-600 font-semibold cursor-not-allowed"
+                />
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400 text-xs">
+                  (Fixed)
+                </div>
               </div>
             </div>
           </div>
@@ -414,23 +532,65 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess, o
               className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-[#F5F7FA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#91BD32]"
             />
           </div>
+        </div>
 
-          {/* Occupation */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              {t('occupationLabel')}
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <Briefcase className="w-4 h-4" />
+        {/* ----------------------------------------------------------------- */}
+        {/* SECTION 4: ADDITIONAL INFORMATION                                 */}
+        {/* ----------------------------------------------------------------- */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-7 space-y-5">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h2 className="text-base font-bold text-[#20223E] flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#91BD32]" />
+              {t('additionalInfoSection')}
+            </h2>
+            <span className="text-xs text-slate-400 font-medium">
+              {t('optional')}
+            </span>
+          </div>
+
+          {/* Blood Group & Occupation Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Blood Group Dropdown */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                {t('bloodGroupLabel')}
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-red-500">
+                  <Droplet className="w-4 h-4" />
+                </div>
+                <select
+                  value={formData.blood_group}
+                  onChange={(e) => handleInputChange('blood_group', e.target.value)}
+                  className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-[#F5F7FA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#91BD32]"
+                >
+                  <option value="">-- {t('bloodGroupSelect')} --</option>
+                  {BLOOD_GROUPS.map((bg) => (
+                    <option key={bg} value={bg}>
+                      {bg === 'Unknown' ? t('bloodGroupUnknown') : bg}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <input
-                type="text"
-                value={formData.occupation}
-                onChange={(e) => handleInputChange('occupation', e.target.value)}
-                placeholder={t('occupationPlaceholder')}
-                className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-[#F5F7FA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#91BD32]"
-              />
+            </div>
+
+            {/* Occupation */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                {t('occupationLabel')}
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <Briefcase className="w-4 h-4" />
+                </div>
+                <input
+                  type="text"
+                  value={formData.occupation}
+                  onChange={(e) => handleInputChange('occupation', e.target.value)}
+                  placeholder={t('occupationPlaceholder')}
+                  className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-[#F5F7FA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#91BD32]"
+                />
+              </div>
             </div>
           </div>
 
@@ -478,14 +638,184 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess, o
             </div>
             <p className="text-[10px] text-slate-500 italic">
               {language === 'ta' 
-                ? 'ஆதார் மற்றும் வாக்காளர் அட்டை எண்கள் விருப்பத்தேர்வுக்குரியவை மற்றும் பாதுகாப்பாக வைக்கப்படும்.' 
-                : 'Aadhaar and Voter ID numbers are strictly optional, protected, and will never be shared publicly.'}
+                ? 'ஆதார் மற்றும் வாக்காளர் அட்டை எண்கள் விருப்பத்தேர்வுக்குரியவை, பாதுகாப்பாக வைக்கப்படும் மற்றும் பொது சுயவிவரங்களில் வெளியிடப்படாது.' 
+                : 'Aadhaar and Voter ID numbers are strictly optional, securely encrypted, and never exposed publicly.'}
             </p>
           </div>
-
         </div>
 
-        {/* SECTION 3: CONSENT CHECKBOX */}
+        {/* ----------------------------------------------------------------- */}
+        {/* SECTION 5: VOLUNTEER PARTICIPATION & COMMUNITY ENGAGEMENT         */}
+        {/* ----------------------------------------------------------------- */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-7 space-y-5">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h2 className="text-base font-bold text-[#20223E] flex items-center gap-2">
+              <HeartHandshake className="w-5 h-5 text-[#91BD32]" />
+              {t('volunteerSectionTitle')}
+            </h2>
+            <span className="text-xs text-slate-400 font-medium">
+              {t('optional')}
+            </span>
+          </div>
+
+          <p className="text-xs text-slate-500">
+            {t('volunteerSectionSubtitle')}
+          </p>
+
+          <div className="space-y-5">
+            {/* Question 1: Volunteer Participation */}
+            <div>
+              <label className="block text-xs sm:text-sm font-bold text-slate-800 mb-2">
+                {t('volunteerWillingnessLabel')}
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {[
+                  { value: 'Yes, I am interested.', label: t('volunteerOptYes'), color: 'hover:border-[#91BD32]' },
+                  { value: 'Maybe, depending on the activity.', label: t('volunteerOptMaybe'), color: 'hover:border-blue-400' },
+                  { value: 'No, not currently.', label: t('volunteerOptNo'), color: 'hover:border-slate-400' },
+                ].map((opt) => {
+                  const isSelected = formData.volunteer_willingness === opt.value;
+                  return (
+                    <label
+                      key={opt.value}
+                      className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
+                        isSelected 
+                          ? 'border-[#91BD32] bg-[#91BD32]/10 font-bold text-[#20223E] shadow-xs' 
+                          : `border-slate-200 bg-[#F5F7FA] text-slate-700 ${opt.color}`
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="volunteer_willingness"
+                        value={opt.value}
+                        checked={isSelected}
+                        onChange={() => handleInputChange('volunteer_willingness', opt.value)}
+                        className="mt-0.5 text-[#91BD32] focus:ring-[#91BD32]"
+                      />
+                      <span className="text-xs leading-snug">{opt.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Question 2: Blood Donation Willingness */}
+            <div>
+              <label className="block text-xs sm:text-sm font-bold text-slate-800 mb-2 flex items-center gap-1.5">
+                <Droplet className="w-4 h-4 text-red-500 flex-shrink-0" />
+                <span>{t('bloodDonationLabel')}</span>
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {[
+                  { value: 'Yes, I am willing.', label: t('bloodDonationOptYes'), color: 'hover:border-red-400' },
+                  { value: 'Maybe in the future.', label: t('bloodDonationOptMaybe'), color: 'hover:border-amber-400' },
+                  { value: 'No.', label: t('bloodDonationOptNo'), color: 'hover:border-slate-400' },
+                ].map((opt) => {
+                  const isSelected = formData.blood_donation_willingness === opt.value;
+                  return (
+                    <label
+                      key={opt.value}
+                      className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
+                        isSelected 
+                          ? 'border-red-400 bg-red-50 font-bold text-[#20223E] shadow-xs' 
+                          : `border-slate-200 bg-[#F5F7FA] text-slate-700 ${opt.color}`
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="blood_donation_willingness"
+                        value={opt.value}
+                        checked={isSelected}
+                        onChange={() => handleInputChange('blood_donation_willingness', opt.value)}
+                        className="mt-0.5 text-red-500 focus:ring-red-400"
+                      />
+                      <span className="text-xs leading-snug">{opt.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+
+              {/* Medical Eligibility Disclaimer */}
+              <div className="mt-2.5 p-3 rounded-xl bg-amber-50/70 border border-amber-200/80 text-[11px] text-amber-900 leading-relaxed">
+                {t('bloodDonationDisclaimer')}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ----------------------------------------------------------------- */}
+        {/* SECTION 6: SKILLS & HOBBIES                                       */}
+        {/* ----------------------------------------------------------------- */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-7 space-y-6">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+              <h2 className="text-base font-bold text-[#20223E] flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-[#2878B9]" />
+                {t('skillsSectionTitle')}
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">
+                {t('skillsSectionSubtitle')}
+              </p>
+            </div>
+            <span className="text-xs text-slate-400 font-medium">
+              {t('optional')}
+            </span>
+          </div>
+
+          {/* Categorized Checkbox Grid */}
+          <div className="space-y-5">
+            {SKILL_CATEGORIES.map((category) => (
+              <div key={category.id} className="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
+                <h3 className="text-xs font-black uppercase tracking-wider text-[#20223E] mb-3 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#91BD32]" />
+                  {t(category.categoryKey)}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {category.skills.map((skill) => {
+                    const isChecked = formData.skills.includes(skill.id);
+                    return (
+                      <label
+                        key={skill.id}
+                        className={`flex items-center gap-2.5 p-2 rounded-lg border text-xs cursor-pointer transition-colors ${
+                          isChecked 
+                            ? 'bg-[#91BD32]/15 border-[#91BD32] text-[#20223E] font-semibold' 
+                            : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => handleToggleSkill(skill.id)}
+                          className="w-4 h-4 rounded border-slate-300 text-[#91BD32] focus:ring-[#91BD32] accent-[#91BD32] cursor-pointer"
+                        />
+                        <span className="flex-1 select-none">{t(skill.labelKey)}</span>
+                        {isChecked && <Check className="w-3.5 h-3.5 text-[#91BD32] flex-shrink-0" />}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Other Skills Free-text Field */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+              {t('otherSkillsLabel')}
+            </label>
+            <input
+              type="text"
+              value={formData.other_skills}
+              onChange={(e) => handleInputChange('other_skills', e.target.value)}
+              placeholder={t('otherSkillsPlaceholder')}
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-[#F5F7FA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#91BD32]"
+            />
+          </div>
+        </div>
+
+        {/* ----------------------------------------------------------------- */}
+        {/* SECTION 7: CONSENT CHECKBOX                                       */}
+        {/* ----------------------------------------------------------------- */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
           <label className="flex items-start gap-3 cursor-pointer">
             <input

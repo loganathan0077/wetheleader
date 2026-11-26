@@ -10,6 +10,7 @@ import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { AdminLayout } from './components/AdminLayout';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { MemberManagement } from './pages/admin/MemberManagement';
+import { VolunteerDirectory } from './pages/admin/VolunteerDirectory';
 import { ReportsExportPage } from './pages/admin/ReportsExportPage';
 import { AdminSettings } from './pages/admin/AdminSettings';
 import { Member } from './types';
@@ -76,6 +77,9 @@ export const AppContent: React.FC = () => {
             selectedMemberForDetail={selectedMemberForDetail}
             onClearDetail={() => setSelectedMemberForDetail(null)}
           />
+        )}
+        {adminTab === 'volunteers' && (
+          <VolunteerDirectory />
         )}
         {adminTab === 'add-member' && (
           <MemberManagement />

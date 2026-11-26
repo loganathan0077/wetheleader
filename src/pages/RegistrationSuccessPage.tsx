@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { Member } from '../types';
 import { CR80MembershipCard } from '../components/CR80MembershipCard';
+import { exportCardPdf, exportCardPng } from '../utils/idCardExport';
 import { 
   CheckCircle, 
   Download, 
@@ -67,47 +68,18 @@ export const RegistrationSuccessPage: React.FC<RegistrationSuccessPageProps> = (
     setTimeout(() => setCopied(false), 2500);
   };
 
-  // 1. GENERATE EXACT 2-PAGE CR80 PDF (53.98 × 85.60 mm per page)
+  // 1. GENERATE EXACT CR80 PDF (53.98 × 85.60 mm per page, 300 DPI high-res)
   const handleDownloadPdf = async () => {
     if (!frontRef.current || !backRef.current) return;
     setIsExportingPdf(true);
 
     try {
-      // 300 DPI scale factor: 638 px / offsetWidth
-      const scaleFront = 638 / frontRef.current.offsetWidth;
-      const frontCanvas = await html2canvas(frontRef.current, {
-        scale: scaleFront,
-        useCORS: true,
-        backgroundColor: '#FFFFFF',
-        logging: false
-      });
-      const frontImgData = frontCanvas.toDataURL('image/png', 1.0);
-
-      const scaleBack = 638 / backRef.current.offsetWidth;
-      const backCanvas = await html2canvas(backRef.current, {
-        scale: scaleBack,
-        useCORS: true,
-        backgroundColor: '#FFFFFF',
-        logging: false
-      });
-      const backImgData = backCanvas.toDataURL('image/png', 1.0);
-
-      // Create PDF with exact CR80 vertical dimensions (53.98mm × 85.60mm)
-      const pdf = new jsPDF({
-        orientation: 'p',
-        unit: 'mm',
-        format: [53.98, 85.60],
-        compress: true
-      });
-
-      // Page 1: Front
-      pdf.addImage(frontImgData, 'PNG', 0, 0, 53.98, 85.60, undefined, 'FAST');
-
-      // Page 2: Back
-      pdf.addPage([53.98, 85.60], 'p');
-      pdf.addImage(backImgData, 'PNG', 0, 0, 53.98, 85.60, undefined, 'FAST');
-
-      pdf.save(`${member.membership_number}_CR80_ID_Card.pdf`);
+      await exportCardPdf(
+        frontRef.current,
+        backRef.current,
+        member,
+        activeSide
+      );
     } catch (err) {
       console.error('Error generating CR80 PDF:', err);
     } finally {
@@ -120,17 +92,7 @@ export const RegistrationSuccessPage: React.FC<RegistrationSuccessPageProps> = (
     if (!frontRef.current) return;
     setIsExportingFrontPng(true);
     try {
-      const scale = 638 / frontRef.current.offsetWidth;
-      const canvas = await html2canvas(frontRef.current, {
-        scale: scale,
-        useCORS: true,
-        backgroundColor: '#FFFFFF',
-        logging: false
-      });
-      const link = document.createElement('a');
-      link.download = `${member.membership_number}_CR80_Front.png`;
-      link.href = canvas.toDataURL('image/png', 1.0);
-      link.click();
+      await exportCardPng(frontRef.current, member, 'Front');
     } catch (err) {
       console.error('Error downloading Front PNG:', err);
     } finally {
@@ -143,17 +105,7 @@ export const RegistrationSuccessPage: React.FC<RegistrationSuccessPageProps> = (
     if (!backRef.current) return;
     setIsExportingBackPng(true);
     try {
-      const scale = 638 / backRef.current.offsetWidth;
-      const canvas = await html2canvas(backRef.current, {
-        scale: scale,
-        useCORS: true,
-        backgroundColor: '#FFFFFF',
-        logging: false
-      });
-      const link = document.createElement('a');
-      link.download = `${member.membership_number}_CR80_Back.png`;
-      link.href = canvas.toDataURL('image/png', 1.0);
-      link.click();
+      await exportCardPng(backRef.current, member, 'Back');
     } catch (err) {
       console.error('Error downloading Back PNG:', err);
     } finally {
