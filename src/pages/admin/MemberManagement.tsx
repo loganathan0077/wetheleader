@@ -29,8 +29,12 @@ import {
   CreditCard,
   Sparkles,
   Download,
-  Info
+  Info,
+  Camera,
+  Loader2,
+  CheckCircle2
 } from 'lucide-react';
+import { compressImageFile, isValidImageFile, formatFileSize } from '../../utils/imageCompressor';
 
 interface MemberManagementProps {
   selectedMemberForDetail?: Member | null;
@@ -92,6 +96,43 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
   });
   const [formError, setFormError] = useState<string | null>(null);
   const [formSaving, setFormSaving] = useState(false);
+  const [photoCompressing, setPhotoCompressing] = useState(false);
+  const [photoStats, setPhotoStats] = useState<{ originalSize: string; compressedSize: string; ratio: number } | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+
+  const handleAdminPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoError(null);
+
+    if (!isValidImageFile(file)) {
+      setPhotoError(t('photoInvalidType'));
+      e.target.value = '';
+      return;
+    }
+
+    setPhotoCompressing(true);
+    try {
+      const res = await compressImageFile(file, {
+        maxDimension: 600,
+        targetMinKB: 20,
+        targetMaxKB: 50,
+        minQuality: 0.55
+      });
+      setFormData(prev => ({ ...prev, profile_photo_url: res.dataUrl }));
+      setPhotoStats({
+        originalSize: formatFileSize(res.originalSizeKB),
+        compressedSize: formatFileSize(res.compressedSizeKB),
+        ratio: res.compressionRatio
+      });
+    } catch (err) {
+      console.error('Admin photo compression error:', err);
+      setPhotoError(t('photoCompressError'));
+    } finally {
+      setPhotoCompressing(false);
+      e.target.value = '';
+    }
+  };
 
   const fetchMembers = async () => {
     setLoading(true);
@@ -280,11 +321,15 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
       consent_given: m.consent_given ?? true,
     });
     setFormError(null);
+    setPhotoStats(null);
+    setPhotoError(null);
   };
 
   // Open Add Modal
   const handleOpenAdd = () => {
     setIsAddModalOpen(true);
+    setPhotoStats(null);
+    setPhotoError(null);
     setFormData({
       full_name: '',
       mobile_number: '',
@@ -1079,6 +1124,60 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
                   {formError}
                 </div>
               )}
+
+              {/* Profile Photo Upload with Automatic Compression */}
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <label className="block text-xs font-bold text-slate-700 mb-2">
+                  {t('photoLabel')}
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-16 rounded-xl bg-white border border-slate-300 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {photoCompressing ? (
+                      <Loader2 className="w-5 h-5 text-[#91BD32] animate-spin" />
+                    ) : formData.profile_photo_url ? (
+                      <img src={formData.profile_photo_url} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <Camera className="w-6 h-6 text-slate-400" />
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold cursor-pointer transition-colors shadow-xs">
+                        <Camera className="w-3.5 h-3.5 text-[#2878B9]" />
+                        <span>{formData.profile_photo_url ? (isTamil ? 'மாற்று' : 'Change') : t('photoUploadBtn')}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAdminPhotoUpload}
+                          disabled={photoCompressing}
+                          className="hidden"
+                        />
+                      </label>
+                      {formData.profile_photo_url && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, profile_photo_url: '' }));
+                            setPhotoStats(null);
+                          }}
+                          className="text-xs text-red-600 hover:underline px-1"
+                        >
+                          {t('photoRemoveBtn')}
+                        </button>
+                      )}
+                    </div>
+                    {photoStats && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span>{photoStats.compressedSize} (Auto-compressed)</span>
+                      </span>
+                    )}
+                    {photoError && (
+                      <p className="text-[11px] text-red-600 font-semibold">{photoError}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               {/* Full Name */}
               <div>

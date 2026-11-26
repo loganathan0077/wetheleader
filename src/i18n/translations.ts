@@ -85,6 +85,12 @@ export const translations = {
     photoUploadHint: "Take a photo or upload an image",
     photoUploadBtn: "Upload Photo",
     photoRemoveBtn: "Remove",
+    photoCompressing: "Compressing photo...",
+    photoCompressedBadge: "Compressed: {size}",
+    photoOriginalBadge: "Original: {size}",
+    photoSavedBadge: "{ratio}% saved",
+    photoInvalidType: "Please select a valid image file (JPG, PNG, WebP).",
+    photoCompressError: "Unable to process photo. Please try another image.",
 
     // Volunteer Participation
     volunteerSectionTitle: "Volunteer Participation & Community Engagement",
@@ -400,6 +406,12 @@ export const translations = {
     photoUploadHint: "புகைப்படம் எடுக்கவும் அல்லது பதிவேற்றவும்",
     photoUploadBtn: "படம் பதிவேற்று",
     photoRemoveBtn: "நீக்கு",
+    photoCompressing: "படம் சுருக்கப்படுகிறது...",
+    photoCompressedBadge: "சுருக்கப்பட்டது: {size}",
+    photoOriginalBadge: "அசல்: {size}",
+    photoSavedBadge: "{ratio}% குறைக்கப்பட்டது",
+    photoInvalidType: "தயவுசெய்து சரியான படக் கோப்பைத் தேர்ந்தெடுக்கவும் (JPG, PNG, WebP).",
+    photoCompressError: "படத்தைச் செயலாக்க முடியவில்லை. வேறு படத்தை முயற்சிக்கவும்.",
 
     // Volunteer Participation
     volunteerSectionTitle: "தன்னார்வப் பங்கேற்பு மற்றும் சமூக ஈடுபாடு",
