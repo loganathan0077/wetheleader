@@ -26,11 +26,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           const { data: { session }, error } = await client.auth.getSession();
           if (!error && session?.user) {
-            setAdminUser({
-              id: session.user.id,
-              email: session.user.email || 'Admin',
-              name: 'WE the Leader Admin'
-            });
+            // Authoritative server-side role check from public.profiles table
+            const { data: profile } = await client
+              .from('profiles')
+              .select('role, is_active, full_name')
+              .eq('id', session.user.id)
+              .maybeSingle();
+
+            const hasAdminRole = profile?.role === 'admin' && profile?.is_active !== false;
+            const isInitialAdmin = session.user.email?.toLowerCase() === 'kkd@wetheleader.com';
+
+            if (hasAdminRole || (isInitialAdmin && !profile)) {
+              setAdminUser({
+                id: session.user.id,
+                email: session.user.email || 'Admin',
+                name: profile?.full_name || 'WE the Leader Admin',
+                role: 'admin'
+              });
+            } else {
+              // Non-admin authenticated user: deny admin portal access
+              setAdminUser(null);
+              localStorage.removeItem(ADMIN_STORAGE_KEY);
+            }
           } else {
             // Untrusted client storage must be cleared if no valid Supabase session exists
             setAdminUser(null);
@@ -109,10 +126,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         if (data.user) {
+          // Authoritative check: must have admin role in public.profiles
+          const { data: profile } = await client
+            .from('profiles')
+            .select('role, is_active, full_name')
+            .eq('id', data.user.id)
+            .maybeSingle();
+
+          const hasAdminRole = profile?.role === 'admin' && profile?.is_active !== false;
+          const isInitialAdmin = data.user.email?.toLowerCase() === 'kkd@wetheleader.com';
+
+          if (!hasAdminRole && !(isInitialAdmin && !profile)) {
+            await client.auth.signOut();
+            return {
+              success: false,
+              error: 'Access Denied: You do not have administrator permissions.'
+            };
+          }
+
           const user: AdminUser = {
             id: data.user.id,
             email: data.user.email || fullEmail,
-            name: 'WE the Leader Admin'
+            name: profile?.full_name || 'WE the Leader Admin',
+            role: 'admin'
           };
           setAdminUser(user);
           localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(user));

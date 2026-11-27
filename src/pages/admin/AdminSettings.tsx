@@ -256,8 +256,8 @@ DROP POLICY IF EXISTS "Admin manage website_settings" ON public.website_settings
 CREATE POLICY "Admin manage website_settings"
 ON public.website_settings FOR ALL
 TO authenticated
-USING (true)
-WITH CHECK (true);
+USING (public.is_admin())
+WITH CHECK (public.is_admin());
 
 -- Seed initial row
 INSERT INTO public.website_settings (key)

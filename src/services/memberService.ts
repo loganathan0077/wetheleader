@@ -1,5 +1,5 @@
 import { Member, MemberFormData, DashboardStats } from '../types';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, uploadMemberPhoto } from '../lib/supabase';
 
 const LOCAL_STORAGE_KEY = 'wtl_members_data';
 const COUNTER_STORAGE_KEY = 'wtl_membership_counters';
@@ -157,26 +157,52 @@ export const memberService = {
           membershipNumber = generateLocalMembershipNumber();
         }
 
+        let photoPath = formData.profile_photo_url || null;
+        if (photoPath && photoPath.startsWith('data:image')) {
+          try {
+            const res = await fetch(photoPath);
+            const blob = await res.blob();
+            const uploadRes = await uploadMemberPhoto(blob, `member_${Date.now()}.jpg`);
+            if (uploadRes.path) {
+              photoPath = uploadRes.path;
+            }
+          } catch (uploadErr) {
+            console.warn('Storage upload fallback:', uploadErr);
+          }
+        }
+
         const newRecord = {
+          membership_id: membershipNumber,
           membership_number: membershipNumber,
           full_name: formData.full_name.trim(),
+          tamil_name: preferredLang === 'ta' ? formData.full_name.trim() : null,
           mobile_number: formData.mobile_number.trim(),
+          phone: formData.mobile_number.trim(),
           date_of_birth: formData.date_of_birth || null,
           gender: formData.gender || null,
           address: formData.address?.trim() || null,
+          residential_address: formData.address?.trim() || null,
           district: 'Coimbatore',
           village_name: formData.village_name?.trim() || null,
+          village: formData.village_name?.trim() || null,
           street_name: formData.street_name?.trim() || null,
+          street: formData.street_name?.trim() || null,
           ward_number: formData.ward_number?.trim() || null,
           occupation: formData.occupation?.trim() || null,
           blood_group: formData.blood_group || null,
           volunteer_willingness: formData.volunteer_willingness || null,
+          willing_to_volunteer: formData.volunteer_willingness || null,
           blood_donation_willingness: formData.blood_donation_willingness || null,
+          willing_to_donate_blood: formData.blood_donation_willingness || null,
           skills: Array.isArray(formData.skills) ? formData.skills : [],
           other_skills: formData.other_skills?.trim() || null,
+          hobbies: formData.other_skills?.trim() || null,
           voter_id_number: formData.voter_id_number?.trim() || null,
+          voter_id: formData.voter_id_number?.trim() || null,
           aadhaar_number: formData.aadhaar_number?.trim() || null,
-          profile_photo_url: formData.profile_photo_url || null,
+          profile_photo_url: photoPath,
+          photo_path: photoPath,
+          approval_status: 'approved',
           preferred_language: preferredLang,
           consent_given: formData.consent_given,
           registration_date: new Date().toISOString()
@@ -380,6 +406,29 @@ export const memberService = {
     local[index] = updated;
     saveLocalMembers(local);
     return updated;
+  },
+
+  // Update member approval status (approved, rejected, pending)
+  async updateMemberApproval(id: string, status: 'approved' | 'rejected' | 'pending'): Promise<boolean> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error } = await supabase
+          .from('members')
+          .update({ approval_status: status, updated_at: new Date().toISOString() })
+          .eq('id', id);
+        if (error) {
+          console.error('Error updating approval status:', error);
+          return false;
+        }
+      } catch (err) {
+        console.warn('Supabase approval update exception:', err);
+      }
+    }
+
+    const local = getLocalMembers();
+    const updated = local.map(m => m.id === id ? { ...m, approval_status: status } : m);
+    saveLocalMembers(updated);
+    return true;
   },
 
   // Delete member record
