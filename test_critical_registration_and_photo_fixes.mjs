@@ -38,14 +38,16 @@ assert(
 
 assert(
   transFile.includes('valGenderRequired: "Please select your gender."') &&
-  transFile.includes('valVillageRequired: "Please select or enter your village / town."'),
-  'English mandatory validation messages for Gender and Village'
+  transFile.includes('valVillageRequired: "Please select or enter your village / town."') &&
+  transFile.includes('valStreetRequired: "Please enter your street name or area."'),
+  'English mandatory validation messages for Gender, Village and Street'
 );
 
 assert(
   transFile.includes('valGenderRequired: "தயவுசெய்து உங்கள் பாலினத்தைத் தேர்ந்தெடுக்கவும்."') &&
-  transFile.includes('valVillageRequired: "தயவுசெய்து உங்கள் கிராமம் / ஊரைத் தேர்ந்தெடுக்கவும்."'),
-  'Tamil mandatory validation messages for Gender and Village'
+  transFile.includes('valVillageRequired: "தயவுசெய்து உங்கள் கிராமம் / ஊரைத் தேர்ந்தெடுக்கவும்."') &&
+  transFile.includes('valStreetRequired: "தயவுசெய்து உங்கள் தெரு அல்லது பகுதியின் பெயரை உள்ளிடவும்."'),
+  'Tamil mandatory validation messages for Gender, Village and Street'
 );
 
 // 2. RegistrationPage check
@@ -53,8 +55,9 @@ const regFile = fs.readFileSync(path.join(projectRoot, 'src/pages/RegistrationPa
 
 assert(
   regFile.includes('errors.gender = t(\'valGenderRequired\');') &&
-  regFile.includes('errors.village_name = t(\'valVillageRequired\');'),
-  'RegistrationPage validates mandatory gender and village_name'
+  regFile.includes('errors.village_name = t(\'valVillageRequired\');') &&
+  regFile.includes('errors.street_name = t(\'valStreetRequired\');'),
+  'RegistrationPage validates mandatory gender, village_name and street_name'
 );
 
 assert(
@@ -72,8 +75,9 @@ assert(
 
 assert(
   regFile.includes("{t('genderLabel')} <span className=\"text-red-500\">*</span>") &&
-  regFile.includes("{t('villageLabel')} <span className=\"text-red-500\">*</span>"),
-  'RegistrationPage displays clear red asterisk (*) for mandatory Gender and Village'
+  regFile.includes("{t('villageLabel')} <span className=\"text-red-500\">*</span>") &&
+  regFile.includes("{t('streetLabel')} <span className=\"text-red-500\">*</span>"),
+  'RegistrationPage displays clear red asterisk (*) for mandatory Gender, Village and Street'
 );
 
 // 3. Image Compressor check

@@ -193,7 +193,12 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
       errors.village_name = t('valVillageRequired');
     }
 
-    // 6. Aadhaar Number (if provided, must be 12 digits)
+    // 6. Mandatory Street / Area
+    if (!formData.street_name || !formData.street_name.trim()) {
+      errors.street_name = t('valStreetRequired');
+    }
+
+    // 7. Aadhaar Number (if provided, must be 12 digits)
     if (formData.aadhaar_number && formData.aadhaar_number.trim()) {
       const cleanAadhaar = formData.aadhaar_number.replace(/\D/g, '');
       if (cleanAadhaar.length !== 12) {
@@ -668,12 +673,9 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
               <span className="w-2.5 h-2.5 rounded-full bg-[#E98A32]" />
               {t('addressSection')}
             </h2>
-            <span className="text-xs text-slate-400 font-medium">
-              {t('optional')}
-            </span>
           </div>
 
-          {/* Village Name & Street Name Grid (Village is MANDATORY) */}
+          {/* Village Name & Street Name Grid (Village and Street are MANDATORY) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Village Name (MANDATORY FIELD) */}
             <div>
@@ -700,18 +702,26 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
               </p>
             </div>
 
-            {/* Street Name */}
+            {/* Street Name (MANDATORY FIELD) */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                {t('streetLabel')}
+                {t('streetLabel')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={formData.street_name}
                 onChange={(e) => handleInputChange('street_name', e.target.value)}
                 placeholder={t('streetPlaceholder')}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-[#F5F7FA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#91BD32]"
+                className={`w-full px-3.5 py-2.5 text-sm rounded-xl border ${
+                  fieldErrors.street_name ? 'border-red-400 bg-red-50/40' : 'border-slate-300 bg-[#F5F7FA]'
+                } focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#91BD32]`}
               />
+              {fieldErrors.street_name && (
+                <p className="mt-1 text-xs text-red-600 font-semibold flex items-center gap-1 animate-fadeIn">
+                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span>{fieldErrors.street_name}</span>
+                </p>
+              )}
               <p className="mt-1 text-[10px] text-slate-400">
                 {language === 'ta' ? 'தெரு அல்லது பகுதி பெயர்' : 'Separate street / locality field'}
               </p>
