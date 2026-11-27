@@ -43,23 +43,50 @@ export async function uploadMemberPhoto(
 }
 
 /**
- * Retrieves a signed URL for a protected member photo (valid for 1 hour)
+ * Retrieves a signed URL for a protected member photo in the private 'member-photos' bucket.
+ * Cleans leading/bucket prefixes, supports 24-hour expiration (86400s), and preserves external/data URLs.
  */
 export async function getMemberPhotoSignedUrl(
   path: string
 ): Promise<string | null> {
   if (!supabase || !path) return null;
-  // If it's already a full data URL or external URL, return directly
-  if (path.startsWith('data:') || path.startsWith('http://') || path.startsWith('https://')) {
-    return path;
+  const trimmed = path.trim();
+  if (!trimmed) return null;
+
+  // If it's already a full data URL, blob URL, or external link
+  if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
+    return trimmed;
   }
+
+  // If it is already a signed URL with active token
+  if (trimmed.includes('token=')) {
+    return trimmed;
+  }
+
+  // Sanitize path: strip redundant bucket name prefixes, domain URLs, or leading slashes
+  let cleanPath = trimmed;
+  if (cleanPath.includes('/member-photos/')) {
+    cleanPath = cleanPath.split('/member-photos/').pop() || cleanPath;
+  }
+  cleanPath = cleanPath
+    .replace(/^\/?(member-photos\/)+/, '')
+    .replace(/^\/+/, '')
+    .split('?')[0];
+
+  if (!cleanPath) return null;
+
   try {
     const { data, error } = await supabase.storage
       .from('member-photos')
-      .createSignedUrl(path, 3600);
-    if (error || !data) return null;
+      .createSignedUrl(cleanPath, 86400); // 24 hours validity for viewing, printing & PDF export
+
+    if (error || !data?.signedUrl) {
+      console.warn('Supabase createSignedUrl notice:', error?.message);
+      return null;
+    }
     return data.signedUrl;
-  } catch {
+  } catch (err: any) {
+    console.warn('Storage getMemberPhotoSignedUrl exception:', err?.message || err);
     return null;
   }
 }

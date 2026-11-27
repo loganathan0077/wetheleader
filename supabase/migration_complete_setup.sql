@@ -368,7 +368,7 @@ ON public.website_settings FOR DELETE
 TO authenticated
 USING (public.is_admin());
 
--- 8. Storage Buckets (member-photos, activity-images, organisation-assets)
+-- 8. Storage Buckets & Policies (member-photos, activity-images, organisation-assets)
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES 
     ('member-photos', 'member-photos', false, 5242880, ARRAY['image/jpeg', 'image/png', 'image/webp']),
@@ -377,3 +377,23 @@ VALUES
 ON CONFLICT (id) DO UPDATE
 SET file_size_limit = EXCLUDED.file_size_limit,
     allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+-- Storage RLS Policies
+DROP POLICY IF EXISTS "Public upload member photos during registration" ON storage.objects;
+CREATE POLICY "Public upload member photos during registration"
+ON storage.objects FOR INSERT
+TO anon, authenticated
+WITH CHECK (bucket_id = 'member-photos');
+
+DROP POLICY IF EXISTS "Admins and coordinators access member photos" ON storage.objects;
+DROP POLICY IF EXISTS "Allow member photos selection for signed URLs" ON storage.objects;
+CREATE POLICY "Allow member photos selection for signed URLs"
+ON storage.objects FOR SELECT
+TO anon, authenticated
+USING (bucket_id = 'member-photos');
+
+DROP POLICY IF EXISTS "Admins delete member photos" ON storage.objects;
+CREATE POLICY "Admins delete member photos"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (bucket_id = 'member-photos' AND public.is_admin());

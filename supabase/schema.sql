@@ -523,6 +523,11 @@ BEGIN
         INSERT INTO public.membership_id_logs (member_id, action, performed_by)
         VALUES (matched_member.id, 'DOWNLOAD_ID', 'VERIFIED_USER');
 
+        -- Mask/clear sensitive national identity numbers to protect volunteer privacy
+        matched_member.aadhaar_number := NULL;
+        matched_member.voter_id := NULL;
+        matched_member.voter_id_number := NULL;
+
         RETURN NEXT matched_member;
     END IF;
 
@@ -662,10 +667,11 @@ TO anon, authenticated
 WITH CHECK (bucket_id = 'member-photos');
 
 DROP POLICY IF EXISTS "Admins and coordinators access member photos" ON storage.objects;
-CREATE POLICY "Admins and coordinators access member photos"
+DROP POLICY IF EXISTS "Allow member photos selection for signed URLs" ON storage.objects;
+CREATE POLICY "Allow member photos selection for signed URLs"
 ON storage.objects FOR SELECT
-TO authenticated
-USING (bucket_id = 'member-photos' AND public.is_coordinator_or_admin());
+TO anon, authenticated
+USING (bucket_id = 'member-photos');
 
 DROP POLICY IF EXISTS "Admins delete member photos" ON storage.objects;
 CREATE POLICY "Admins delete member photos"

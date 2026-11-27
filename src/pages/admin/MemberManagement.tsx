@@ -887,7 +887,7 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
           <div className="bg-white rounded-3xl max-w-4xl w-full shadow-2xl animate-fadeIn overflow-hidden my-auto flex flex-col max-h-[92vh]">
             
             {/* Modal Header */}
-            <div className="bg-[#20223E] text-white p-5 flex items-center justify-between border-b-2 border-[#91BD32] flex-shrink-0">
+            <div className="bg-[#20223E] text-white p-5 flex items-center justify-between border-b-2 border-[#91BD32] flex-shrink-0 no-print">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-white/10 text-[#91BD32]">
                   <Printer className="w-5 h-5 text-[#91BD32]" />
@@ -916,7 +916,7 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
             <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
               
               {/* Duplex Printing Instructions Notice */}
-              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 flex items-start gap-2.5">
+              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 flex items-start gap-2.5 no-print">
                 <Info className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                 <div className="leading-relaxed">
                   <span className="font-bold block text-emerald-900 mb-0.5">
@@ -927,7 +927,7 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
               </div>
 
               {/* Side Selector Tabs */}
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-2 no-print">
                 <button
                   type="button"
                   onClick={() => setPrintCardSide('both')}
@@ -966,11 +966,11 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
               {/* EXACT CR80 CARD CONTAINER (Responsive: Side-by-Side on Desktop, Stacked on Mobile) */}
               <div 
                 id="printable-cr80-container"
-                className="flex flex-col md:flex-row items-center justify-center gap-6 py-3"
+                className={`flex flex-col md:flex-row items-center justify-center gap-6 py-3 print-side-${printCardSide}`}
               >
                 {/* Front Side Card */}
                 <div className={`flex flex-col items-center flex-shrink-0 ${printCardSide === 'back' ? 'hidden' : 'flex'}`}>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1 no-print print-label">
                     <CreditCard className="w-3 h-3 text-[#91BD32]" />
                     <span>{isTamil ? 'முன்பக்கம்' : 'Front Side (53.98 × 85.60 mm)'}</span>
                   </span>
@@ -983,7 +983,7 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
 
                 {/* Back Side Card */}
                 <div className={`flex flex-col items-center flex-shrink-0 ${printCardSide === 'front' ? 'hidden' : 'flex'}`}>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1 no-print print-label">
                     <Sparkles className="w-3 h-3 text-[#2878B9]" />
                     <span>{isTamil ? 'பின்பக்கம்' : 'Back Side (Verification QR)'}</span>
                   </span>
@@ -999,7 +999,7 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
             </div>
 
             {/* Modal Actions Footer */}
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 flex-shrink-0">
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 flex-shrink-0 no-print">
               <span className="text-xs text-slate-500 font-medium">
                 Standard CR80 ATM Card Size: <strong>53.98 mm × 85.60 mm</strong>
               </span>

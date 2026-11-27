@@ -122,7 +122,7 @@ export const DownloadIdCardPage: React.FC<DownloadIdCardPageProps> = ({ onBackTo
       <div className="max-w-4xl mx-auto">
         
         {/* Top Back Navigation */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex items-center justify-between no-print">
           <button
             onClick={onBackToHome}
             className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-600 hover:text-[#20223E] transition-colors cursor-pointer"
@@ -141,7 +141,7 @@ export const DownloadIdCardPage: React.FC<DownloadIdCardPageProps> = ({ onBackTo
             STATE 1: AUTHENTICATION / VERIFICATION FORM
            ========================================================================= */}
         {!verifiedMember ? (
-          <div className="max-w-md mx-auto">
+          <div className="max-w-md mx-auto no-print">
             <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
               
               {/* Header Banner */}
@@ -257,7 +257,7 @@ export const DownloadIdCardPage: React.FC<DownloadIdCardPageProps> = ({ onBackTo
           <div className="space-y-6">
             
             {/* Success Notification Bar */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg border border-slate-200">
+            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg border border-slate-200 no-print">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-3 text-center sm:text-left">
                   <div className="w-12 h-12 rounded-2xl bg-green-100 text-[#91BD32] flex items-center justify-center flex-shrink-0 shadow-xs">
@@ -307,7 +307,7 @@ export const DownloadIdCardPage: React.FC<DownloadIdCardPageProps> = ({ onBackTo
             </div>
 
             {/* Side Switcher (Mobile) */}
-            <div className="flex justify-center md:hidden">
+            <div className="flex justify-center md:hidden no-print">
               <div className="bg-slate-200 p-1 rounded-xl inline-flex gap-1 text-xs font-bold">
                 <button
                   onClick={() => setActiveCardSide('both')}
@@ -333,10 +333,13 @@ export const DownloadIdCardPage: React.FC<DownloadIdCardPageProps> = ({ onBackTo
             {/* CR80 Cards Display Canvas */}
             <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-lg border border-slate-200 flex flex-col items-center">
               
-              <div className="flex flex-col md:flex-row items-center justify-center gap-8 lg:gap-12 w-full">
+              <div 
+                id="printable-cr80-container"
+                className={`flex flex-col md:flex-row items-center justify-center gap-8 lg:gap-12 w-full print-side-${activeCardSide}`}
+              >
                 {/* Front Side */}
                 <div className={`flex flex-col items-center ${activeCardSide === 'back' ? 'hidden md:flex' : 'flex'}`}>
-                  <span className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1">
+                  <span className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1 no-print print-label">
                     <span>FRONT SIDE (53.98 × 85.60 mm)</span>
                   </span>
                   <div className="shadow-2xl rounded-2xl overflow-hidden border border-slate-200">
@@ -350,7 +353,7 @@ export const DownloadIdCardPage: React.FC<DownloadIdCardPageProps> = ({ onBackTo
 
                 {/* Back Side */}
                 <div className={`flex flex-col items-center ${activeCardSide === 'front' ? 'hidden md:flex' : 'flex'}`}>
-                  <span className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1">
+                  <span className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1 no-print print-label">
                     <span>BACK SIDE (VERIFICATION & QR)</span>
                   </span>
                   <div className="shadow-2xl rounded-2xl overflow-hidden border border-slate-200">
@@ -365,7 +368,7 @@ export const DownloadIdCardPage: React.FC<DownloadIdCardPageProps> = ({ onBackTo
               </div>
 
               {/* Physical Specifications Note */}
-              <div className="mt-8 pt-6 border-t border-slate-100 text-center text-xs text-slate-500 max-w-lg">
+              <div className="mt-8 pt-6 border-t border-slate-100 text-center text-xs text-slate-500 max-w-lg no-print">
                 <p className="font-bold text-[#20223E]">ISO/IEC 7810 ID-1 Standard CR80 Dimensions</p>
                 <p className="mt-0.5 text-[11px] text-slate-400">
                   Matches standard physical debit/credit card specifications. Printed with high-contrast functional QR code for official grassroots verification.
