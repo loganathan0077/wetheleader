@@ -271,37 +271,46 @@ CREATE INDEX IF NOT EXISTS idx_members_auth_user ON public.members(auth_user_id)
 CREATE INDEX IF NOT EXISTS idx_members_approval ON public.members(approval_status);
 CREATE INDEX IF NOT EXISTS idx_members_reg_date ON public.members(registration_date DESC);
 
+-- Table grants on members
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.members TO authenticated;
+GRANT INSERT ON TABLE public.members TO anon;
+
 -- Enable RLS on members
 ALTER TABLE public.members ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies on members
--- 1. Public Self-Registration: Visitors can submit membership registrations without reading other records
 DROP POLICY IF EXISTS "Public member registration" ON public.members;
+DROP POLICY IF EXISTS "Members read own record" ON public.members;
+DROP POLICY IF EXISTS "Admins read all members" ON public.members;
+DROP POLICY IF EXISTS "Admins update members" ON public.members;
+DROP POLICY IF EXISTS "Admins delete members" ON public.members;
+
+-- 1. Public Self-Registration: Visitors can submit membership registrations without reading other records
 CREATE POLICY "Public member registration"
 ON public.members FOR INSERT
 TO anon, authenticated
 WITH CHECK (true);
 
--- 2. Authenticated Members can read ONLY their own record
-DROP POLICY IF EXISTS "Members read own record" ON public.members;
+-- 2. Administrators & Coordinators can read ALL member records (Resolves HTTP 403 on Dashboard)
+CREATE POLICY "Admins read all members"
+ON public.members FOR SELECT
+TO authenticated
+USING (public.is_coordinator_or_admin());
+
+-- 3. Authenticated Members can read ONLY their own record
 CREATE POLICY "Members read own record"
 ON public.members FOR SELECT
 TO authenticated
-USING (
-    auth_user_id = auth.uid() 
-    OR public.is_coordinator_or_admin()
-);
+USING (auth_user_id IS NOT NULL AND auth_user_id = auth.uid());
 
--- 3. Only Administrators can update member records (including approval_status)
-DROP POLICY IF EXISTS "Admins update members" ON public.members;
+-- 4. Only Administrators can update member records (including approval_status)
 CREATE POLICY "Admins update members"
 ON public.members FOR UPDATE
 TO authenticated
 USING (public.is_admin())
 WITH CHECK (public.is_admin());
 
--- 4. Only Administrators can delete member records
-DROP POLICY IF EXISTS "Admins delete members" ON public.members;
+-- 5. Only Administrators can delete member records
 CREATE POLICY "Admins delete members"
 ON public.members FOR DELETE
 TO authenticated

@@ -4,7 +4,20 @@ import { supabase, isSupabaseConfigured, uploadMemberPhoto } from '../lib/supaba
 const LOCAL_STORAGE_KEY = 'wtl_members_data';
 const COUNTER_STORAGE_KEY = 'wtl_membership_counters';
 
-// Initial sample seed records for Kinathukadavu area to demonstrate full features
+// Test member IDs used previously for offline demonstration
+export const MOCK_MEMBER_IDS = new Set([
+  'f87a3b12-9c44-42b7-a367-101112131415', // Kathiravan Ramasamy
+  'a12b4c56-7d89-4ef0-1234-56789abcdef0', // Sundari Natarajan
+  'b23c5d67-8e90-4fa1-2345-67890abcdef1'  // Arun Prakash Subramanian
+]);
+
+export function isMockMember(memberOrId: Member | string | undefined | null): boolean {
+  if (!memberOrId) return false;
+  const id = typeof memberOrId === 'string' ? memberOrId : memberOrId.id;
+  return MOCK_MEMBER_IDS.has(id);
+}
+
+// Initial sample seed records for Kinathukadavu area to demonstrate full features (OFFLINE DEMO ONLY)
 const INITIAL_SAMPLE_MEMBERS: Member[] = [
   {
     id: 'f87a3b12-9c44-42b7-a367-101112131415',
@@ -82,13 +95,25 @@ function getLocalMembers(): Member[] {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (!raw) {
+      if (isSupabaseConfigured) {
+        return [];
+      }
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(INITIAL_SAMPLE_MEMBERS));
       return INITIAL_SAMPLE_MEMBERS;
     }
-    return JSON.parse(raw);
+    const parsed: Member[] = JSON.parse(raw);
+    if (isSupabaseConfigured) {
+      // Clean out mock records from localStorage when Supabase is connected
+      const realOnly = parsed.filter(m => !isMockMember(m.id));
+      if (realOnly.length !== parsed.length) {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(realOnly));
+      }
+      return realOnly;
+    }
+    return parsed;
   } catch (e) {
     console.error('Error reading local members:', e);
-    return INITIAL_SAMPLE_MEMBERS;
+    return isSupabaseConfigured ? [] : INITIAL_SAMPLE_MEMBERS;
   }
 }
 
@@ -360,7 +385,7 @@ export const memberService = {
     };
   },
 
-  // Get all members for Admin
+  // Get all members for Admin (strictly actual database records when Supabase is configured)
   async getAllMembers(): Promise<Member[]> {
     if (isSupabaseConfigured && supabase) {
       try {
@@ -368,13 +393,30 @@ export const memberService = {
           .from('members')
           .select('*')
           .order('registration_date', { ascending: false });
+
         if (!error && data) {
-          saveLocalMembers(data as Member[]);
-          return data as Member[];
+          // Never display mock members when Supabase is connected
+          const cleanData = (data as Member[]).filter(m => !isMockMember(m.id));
+          saveLocalMembers(cleanData);
+          return cleanData;
         }
-      } catch {}
+
+        if (error) {
+          console.error(`Supabase members fetch error (${error.code || 'UNKNOWN'}):`, error.message);
+          // Return cached real members only, never fake sample members
+          const localReal = getLocalMembers().filter(m => !isMockMember(m.id));
+          return localReal;
+        }
+      } catch (err) {
+        console.error('Exception fetching members from Supabase:', err);
+      }
     }
-    return getLocalMembers();
+
+    // Pure offline demo mode fallback when Supabase is not configured
+    if (!isSupabaseConfigured) {
+      return getLocalMembers();
+    }
+    return [];
   },
 
   // Update member details

@@ -212,27 +212,38 @@ EXECUTE FUNCTION public.trg_sync_members_columns();
 
 ALTER TABLE public.members ENABLE ROW LEVEL SECURITY;
 
+-- Table Grants for members
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.members TO authenticated;
+GRANT INSERT ON TABLE public.members TO anon;
+
 -- Members RLS
 DROP POLICY IF EXISTS "Public member registration" ON public.members;
+DROP POLICY IF EXISTS "Members read own record" ON public.members;
+DROP POLICY IF EXISTS "Admins read all members" ON public.members;
+DROP POLICY IF EXISTS "Admins update members" ON public.members;
+DROP POLICY IF EXISTS "Admins delete members" ON public.members;
+
 CREATE POLICY "Public member registration"
 ON public.members FOR INSERT
 TO anon, authenticated
 WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Members read own record" ON public.members;
+CREATE POLICY "Admins read all members"
+ON public.members FOR SELECT
+TO authenticated
+USING (public.is_coordinator_or_admin());
+
 CREATE POLICY "Members read own record"
 ON public.members FOR SELECT
 TO authenticated
-USING (auth_user_id = auth.uid() OR public.is_coordinator_or_admin());
+USING (auth_user_id IS NOT NULL AND auth_user_id = auth.uid());
 
-DROP POLICY IF EXISTS "Admins update members" ON public.members;
 CREATE POLICY "Admins update members"
 ON public.members FOR UPDATE
 TO authenticated
 USING (public.is_admin())
 WITH CHECK (public.is_admin());
 
-DROP POLICY IF EXISTS "Admins delete members" ON public.members;
 CREATE POLICY "Admins delete members"
 ON public.members FOR DELETE
 TO authenticated
