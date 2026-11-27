@@ -62,57 +62,43 @@ export async function prepareElementForCapture(element: HTMLElement): Promise<vo
 
 /**
  * Captures a card DOM element as an exact 480 DPI HTML5 Canvas (1016 px × 1612 px).
- * Handles off-screen / hidden mobile tabs cleanly by cloning to an off-screen viewport.
+ * Directly captures the live, rendered card DOM element from the screen (visual source of truth).
+ * Does NOT clone to off-screen elements with missing styles or unconstrained layout.
  */
 export async function captureCardCanvas(
   element: HTMLElement,
   targetWidth: number = CR80_EXPORT_WIDTH_PX,
   targetHeight: number = CR80_EXPORT_HEIGHT_PX
 ): Promise<HTMLCanvasElement> {
-  let target = element;
-  let cleanupClone: (() => void) | null = null;
+  if (!element) {
+    throw new Error('Target card element is missing');
+  }
 
-  // Always use a clean isolated clone to prevent parent modal/scroll/transform interference
-  if (typeof document !== 'undefined') {
-    const clone = element.cloneNode(true) as HTMLElement;
-    clone.style.position = 'fixed';
-    clone.style.left = '-9999px';
-    clone.style.top = '0';
-    clone.style.width = `${CR80_WIDTH_PX}px`;
-    clone.style.height = `${CR80_HEIGHT_PX}px`;
-    clone.style.boxSizing = 'border-box';
-    clone.style.margin = '0';
-    clone.style.padding = '0';
-    clone.style.display = 'flex';
-    clone.style.flexDirection = 'column';
-    clone.style.visibility = 'visible';
-    clone.style.transform = 'none';
-    clone.style.zIndex = '-9999';
-    document.body.appendChild(clone);
-    target = clone;
-    cleanupClone = () => {
-      if (clone.parentNode) {
-        clone.parentNode.removeChild(clone);
-      }
-    };
+  // Handle case where element or an ancestor has display: none (e.g. inactive mobile tab)
+  const modifiedElements: { el: HTMLElement; prevDisplay: string }[] = [];
+  let curr: HTMLElement | null = element;
+  while (curr && curr !== document.body) {
+    const computedDisplay = window.getComputedStyle(curr).display;
+    if (computedDisplay === 'none') {
+      modifiedElements.push({ el: curr, prevDisplay: curr.style.display });
+      curr.style.display = 'flex';
+    }
+    curr = curr.parentElement;
   }
 
   try {
-    await prepareElementForCapture(target);
+    await prepareElementForCapture(element);
 
-    // Exact scale factor to reach 1016px from 318px CSS width (~3.194968x)
+    // Exact scale factor to reach targetWidth from on-screen 318px CSS width (1016 / 318 = 3.194968x)
     const scale = targetWidth / CR80_WIDTH_PX;
 
-    const rawCanvas = await html2canvas(target, {
+    const rawCanvas = await html2canvas(element, {
       scale: scale,
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#FFFFFF',
       logging: false,
-      imageTimeout: 15000,
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: 1200
+      imageTimeout: 15000
     });
 
     // Normalize to exact targetWidth × targetHeight (1016 × 1612) with high quality smoothing
@@ -129,8 +115,8 @@ export async function captureCardCanvas(
     }
     return outputCanvas;
   } finally {
-    if (cleanupClone) {
-      cleanupClone();
+    for (const item of modifiedElements) {
+      item.el.style.display = item.prevDisplay;
     }
   }
 }

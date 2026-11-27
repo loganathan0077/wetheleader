@@ -154,11 +154,16 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
             height: '504px',
             boxSizing: 'border-box',
             pageBreakInside: 'avoid',
-            flexShrink: 0
+            flexShrink: 0,
+            WebkitPrintColorAdjust: 'exact',
+            printColorAdjust: 'exact'
           }}
         >
           {/* Card Header in Navy Blue with micro green accent */}
-          <div className="bg-[#20223E] text-white px-3 py-2 relative border-b-[3px] border-[#91BD32] flex-shrink-0">
+          <div
+            className="bg-[#20223E] text-white px-3 py-2 relative border-b-[3px] border-[#91BD32] flex-shrink-0"
+            style={{ backgroundColor: '#20223E', borderBottom: '3px solid #91BD32' }}
+          >
             <div className="flex items-center justify-between">
               
               {/* Logo in clean white container */}
@@ -181,7 +186,7 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
                 <div className="text-[11.5px] font-black tracking-tight leading-tight text-white uppercase">
                   WE THE LEADER
                 </div>
-                <div className="text-[7.5px] font-black text-[#91BD32] tracking-wider uppercase mt-0.5">
+                <div className="text-[7.5px] font-black text-[#91BD32] tracking-wider uppercase mt-0.5" style={{ color: '#91BD32' }}>
                   LEAD THE CHANGE
                 </div>
                 <div className="text-[6.5px] text-slate-300 font-bold uppercase tracking-wider flex items-center justify-end gap-0.5 mt-0.5">
@@ -197,7 +202,10 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
           <div className="px-3.5 pt-1.5 pb-2 flex flex-col items-center flex-1 justify-between text-center">
             
             {/* Photo Frame (Passport proportion 84 × 98 px) */}
-            <div className="w-[84px] h-[98px] rounded-xl border-[2.5px] border-[#91BD32] p-0.5 bg-white shadow-xs overflow-hidden relative flex items-center justify-center flex-shrink-0">
+            <div
+              className="w-[84px] h-[98px] rounded-xl border-[2.5px] border-[#91BD32] p-0.5 bg-white shadow-xs overflow-hidden relative flex items-center justify-center flex-shrink-0"
+              style={{ width: '84px', height: '98px', maxWidth: '84px', maxHeight: '98px', flexShrink: 0 }}
+            >
               {photoUrl && !photoError ? (
                 <img
                   src={photoUrl}
@@ -205,6 +213,7 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
                   crossOrigin="anonymous"
                   onError={() => setPhotoError(true)}
                   className="w-full h-full object-cover rounded-[8px]"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               ) : (
                 /* PHOTO FALLBACK: Official logo on clean background. NEVER broken or empty avatar */
@@ -335,7 +344,10 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
           </div>
 
           {/* Bottom Footer: Center Website */}
-          <div className="bg-[#20223E] text-white px-3 py-1 flex items-center justify-center text-[7.5px] font-extrabold border-t border-slate-200 flex-shrink-0">
+          <div
+            className="bg-[#20223E] text-white px-3 py-1 flex items-center justify-center text-[7.5px] font-extrabold border-t border-slate-200 flex-shrink-0"
+            style={{ backgroundColor: '#20223E' }}
+          >
             <span className="text-center text-white font-extrabold tracking-wider lowercase">
               www.wetheleader.online
             </span>
@@ -357,11 +369,16 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
           height: '504px',
           boxSizing: 'border-box',
           pageBreakInside: 'avoid',
-          flexShrink: 0
+          flexShrink: 0,
+          WebkitPrintColorAdjust: 'exact',
+          printColorAdjust: 'exact'
         }}
       >
         {/* Back Card Header in Navy Blue with micro green accent */}
-        <div className="bg-[#20223E] text-white px-3 py-2 relative border-b-[3px] border-[#91BD32] flex-shrink-0">
+        <div
+          className="bg-[#20223E] text-white px-3 py-2 relative border-b-[3px] border-[#91BD32] flex-shrink-0"
+          style={{ backgroundColor: '#20223E', borderBottom: '3px solid #91BD32' }}
+        >
           <div className="flex items-center justify-between">
             <div className="bg-white p-1 rounded-lg shadow-xs flex-shrink-0">
               <img
@@ -380,7 +397,7 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
               <div className="text-[11.5px] font-black tracking-tight leading-tight text-white uppercase">
                 WE THE LEADER
               </div>
-              <div className="text-[7.5px] font-black text-[#91BD32] tracking-wider uppercase mt-0.5">
+              <div className="text-[7.5px] font-black text-[#91BD32] tracking-wider uppercase mt-0.5" style={{ color: '#91BD32' }}>
                 LEAD THE CHANGE
               </div>
               <div className="text-[6.5px] text-slate-300 font-bold uppercase tracking-wider">
@@ -404,12 +421,16 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
           </div>
 
           {/* Functional QR Code Frame with White Quiet Zone */}
-          <div className="p-1.5 bg-white border-2 border-[#20223E] rounded-xl shadow-xs inline-block my-0.5 flex-shrink-0">
+          <div
+            className="p-1.5 bg-white border-2 border-[#20223E] rounded-xl shadow-xs inline-block my-0.5 flex-shrink-0"
+            style={{ width: '110px', height: '110px', boxSizing: 'border-box', flexShrink: 0 }}
+          >
             {qrCodeUrl ? (
               <img
                 src={qrCodeUrl}
                 alt={`Verification QR Code for ${member.membership_number}`}
                 className="w-[98px] h-[98px] object-contain"
+                style={{ width: '98px', height: '98px', objectFit: 'contain' }}
               />
             ) : (
               <div className="w-[98px] h-[98px] bg-slate-100 flex items-center justify-center text-[8.5px] text-slate-400 font-medium">
@@ -443,7 +464,10 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
         </div>
 
         {/* Bottom Bar: Center Website matching Front */}
-        <div className="bg-[#20223E] text-white px-3 py-1 flex items-center justify-center text-[7.5px] font-extrabold border-t border-slate-200 flex-shrink-0">
+        <div
+          className="bg-[#20223E] text-white px-3 py-1 flex items-center justify-center text-[7.5px] font-extrabold border-t border-slate-200 flex-shrink-0"
+          style={{ backgroundColor: '#20223E' }}
+        >
           <span className="text-center text-white font-extrabold tracking-wider lowercase">
             www.wetheleader.online
           </span>
