@@ -9,7 +9,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['logo.svg', 'we-the-leader-logo.jpg'],
+      includeAssets: ['favicon.ico', 'favicon.png', 'apple-touch-icon.png', 'logo.svg', 'we-the-leader-logo.jpg', 'apa-manikandakumar.jpg'],
       manifest: {
         name: 'WE the Leader - Lead The Change',
         short_name: 'WE the Leader',
@@ -20,10 +20,15 @@ export default defineConfig({
         orientation: 'portrait',
         icons: [
           {
-            src: '/logo.svg',
-            sizes: '192x192 512x512',
-            type: 'image/svg+xml',
+            src: '/favicon.png',
+            sizes: '512x512',
+            type: 'image/png',
             purpose: 'any maskable'
+          },
+          {
+            src: '/apple-touch-icon.png',
+            sizes: '180x180',
+            type: 'image/png'
           }
         ]
       }
