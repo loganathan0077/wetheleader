@@ -7,6 +7,7 @@ import { HomePage } from './pages/HomePage';
 import { RegistrationPage } from './pages/RegistrationPage';
 import { RegistrationSuccessPage } from './pages/RegistrationSuccessPage';
 import { DownloadIdCardPage } from './pages/DownloadIdCardPage';
+import { AboutUsPage } from './pages/AboutUsPage';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { AdminLayout } from './components/AdminLayout';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -78,6 +79,13 @@ export const AppContent: React.FC = () => {
     const action = params.get('action');
     if (action === 'download-id') {
       setCurrentView('download-id');
+    }
+    const view = params.get('view');
+    if (view === 'about') {
+      setCurrentView('about');
+    }
+    if (window.location.hash === '#about-us') {
+      setCurrentView('about');
     }
   }, []);
 
@@ -187,6 +195,19 @@ export const AppContent: React.FC = () => {
           <DownloadIdCardPage 
             onBackToHome={() => {
               setCurrentView('home');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        )}
+
+        {currentView === 'about' && (
+          <AboutUsPage 
+            onBackToHome={() => {
+              setCurrentView('home');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onRegisterClick={() => {
+              setCurrentView('register');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           />

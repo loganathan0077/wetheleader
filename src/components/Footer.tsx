@@ -107,6 +107,13 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           {/* Links & Admin Access */}
           <div className="flex flex-col sm:flex-row items-center justify-center md:justify-end gap-3 text-xs">
             <button
+              onClick={() => onNavigate('about')}
+              className="text-slate-300 hover:text-white font-medium transition-colors cursor-pointer"
+            >
+              About Us
+            </button>
+            <span className="hidden sm:inline text-slate-500">•</span>
+            <button
               onClick={() => onNavigate('register')}
               className="text-[#91BD32] font-semibold hover:underline cursor-pointer"
             >
