@@ -3,7 +3,12 @@ import { useLanguage } from '../context/LanguageContext';
 import { Member } from '../types';
 import { memberService } from '../services/memberService';
 import { CR80MembershipCard } from '../components/CR80MembershipCard';
-import { exportCardPdf } from '../utils/idCardExport';
+import { 
+  exportCardPdf, 
+  exportCardPng, 
+  exportBothCardsZip, 
+  printCardIsolated 
+} from '../utils/idCardExport';
 import QRCode from 'qrcode';
 import {
   CreditCard,
@@ -17,7 +22,10 @@ import {
   CheckCircle2,
   Calendar,
   Lock,
-  RefreshCw
+  RefreshCw,
+  Image,
+  ChevronDown,
+  Info
 } from 'lucide-react';
 
 interface DownloadIdCardPageProps {
@@ -38,6 +46,10 @@ export const DownloadIdCardPage: React.FC<DownloadIdCardPageProps> = ({ onBackTo
   const [verifiedMember, setVerifiedMember] = useState<Member | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isExportingPng, setIsExportingPng] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [paperFormat, setPaperFormat] = useState<'cr80' | 'a4'>('cr80');
+  const [showPngMenu, setShowPngMenu] = useState(false);
   const [activeCardSide, setActiveCardSide] = useState<'both' | 'front' | 'back'>('both');
 
   const frontCardRef = useRef<HTMLDivElement>(null);
@@ -87,7 +99,7 @@ export const DownloadIdCardPage: React.FC<DownloadIdCardPageProps> = ({ onBackTo
     }
   };
 
-  // PDF Export
+  // Dedicated 2-Page CR80 PDF Export
   const handleDownloadPdf = async () => {
     if (!verifiedMember || !frontCardRef.current || !backCardRef.current) return;
     setIsExportingPdf(true);
@@ -105,9 +117,46 @@ export const DownloadIdCardPage: React.FC<DownloadIdCardPageProps> = ({ onBackTo
     }
   };
 
-  // Print ID Card
-  const handlePrint = () => {
-    window.print();
+  // High-Resolution 480 DPI PNG Export (1016 × 1612 px)
+  const handleDownloadPng = async (variant: 'FRONT' | 'BACK' | 'BOTH') => {
+    if (!verifiedMember || !frontCardRef.current) return;
+    setIsExportingPng(true);
+    setShowPngMenu(false);
+    try {
+      if (variant === 'BOTH' && backCardRef.current) {
+        await exportBothCardsZip(
+          frontCardRef.current,
+          backCardRef.current,
+          verifiedMember
+        );
+      } else if (variant === 'BACK' && backCardRef.current) {
+        await exportCardPng(backCardRef.current, verifiedMember, 'BACK');
+      } else {
+        await exportCardPng(frontCardRef.current, verifiedMember, 'FRONT');
+      }
+    } catch (err) {
+      console.error('PNG export error:', err);
+    } finally {
+      setIsExportingPng(false);
+    }
+  };
+
+  // Isolated CR80 / A4 Print Action (Guaranteed 2 pages without clipping or enlargement)
+  const handlePrint = async () => {
+    if (!verifiedMember || !frontCardRef.current) return;
+    setIsPrinting(true);
+    try {
+      await printCardIsolated(
+        frontCardRef.current,
+        backCardRef.current,
+        verifiedMember,
+        { mode: activeCardSide, paperFormat }
+      );
+    } catch (err) {
+      console.error('Print card error:', err);
+    } finally {
+      setIsPrinting(false);
+    }
   };
 
   const handleReset = () => {
@@ -276,23 +325,83 @@ export const DownloadIdCardPage: React.FC<DownloadIdCardPageProps> = ({ onBackTo
                   </div>
                 </div>
 
-                {/* Actions: Download PDF & Print */}
+                {/* Actions: Download PDF, Download PNG & Print */}
                 <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-center">
+                  
+                  {/* Download PNG (480 DPI - 1016 × 1612 px) */}
+                  <div className="relative">
+                    <div className="inline-flex rounded-xl shadow-xs">
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadPng('BOTH')}
+                        disabled={isExportingPng}
+                        className="px-4 py-3 rounded-l-xl bg-slate-100 hover:bg-slate-200 text-[#20223E] border border-slate-300 font-black text-xs sm:text-sm flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                        title="Download 1016 × 1612 px PNG Cards"
+                      >
+                        <Image className="w-4 h-4 text-emerald-600" />
+                        <span>{isExportingPng ? 'Generating...' : 'Download PNG'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowPngMenu(!showPngMenu)}
+                        disabled={isExportingPng}
+                        className="px-2 py-3 rounded-r-xl bg-slate-100 hover:bg-slate-200 border-y border-r border-slate-300 text-slate-700 cursor-pointer disabled:opacity-50"
+                        title="PNG Options"
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {showPngMenu && (
+                      <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 text-xs animate-fadeIn">
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadPng('BOTH')}
+                          className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between font-bold text-slate-800"
+                        >
+                          <span>Download Both (ZIP)</span>
+                          <span className="text-[10px] text-emerald-600 font-mono">1016×1612</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadPng('FRONT')}
+                          className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between text-slate-700"
+                        >
+                          <span>Front Side PNG</span>
+                          <span className="text-[10px] text-slate-400 font-mono">1016×1612</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadPng('BACK')}
+                          className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between text-slate-700"
+                        >
+                          <span>Back Side PNG</span>
+                          <span className="text-[10px] text-slate-400 font-mono">1016×1612</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Download PDF */}
                   <button
                     onClick={handleDownloadPdf}
                     disabled={isExportingPdf}
                     className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#91BD32] hover:bg-[#80a82b] text-[#20223E] font-black text-xs sm:text-sm shadow-md transition-all cursor-pointer disabled:opacity-50"
+                    title="Download 2-Page CR80 PDF"
                   >
                     <Download className="w-4 h-4" />
                     <span>{isExportingPdf ? 'Exporting...' : 'Download CR80 PDF'}</span>
                   </button>
 
+                  {/* Print Card */}
                   <button
                     onClick={handlePrint}
-                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#20223E] hover:bg-[#2c2f54] text-white font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer"
+                    disabled={isPrinting}
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#20223E] hover:bg-[#2c2f54] text-white font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer disabled:opacity-50"
+                    title="Print 2 Pages (Flip on Short Edge)"
                   >
                     <Printer className="w-4 h-4" />
-                    <span>Print Card</span>
+                    <span>{isPrinting ? 'Preparing...' : 'Print Card'}</span>
                   </button>
 
                   <button
@@ -303,6 +412,41 @@ export const DownloadIdCardPage: React.FC<DownloadIdCardPageProps> = ({ onBackTo
                     <RefreshCw className="w-4 h-4" />
                   </button>
                 </div>
+              </div>
+            </div>
+
+            {/* Printing Format & Duplex Guide Notice */}
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-3 text-xs no-print">
+              <div className="flex items-center gap-2 text-slate-700">
+                <Info className="w-4 h-4 text-[#91BD32] flex-shrink-0" />
+                <span>
+                  <strong>Duplex Printing:</strong> Set printer to <strong>"Flip on short edge"</strong> for portrait CR80 card. For standard paper, choose A4 Sheet (Scale 100%).
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 self-center sm:self-auto">
+                <span className="font-bold text-slate-600 mr-1">Target:</span>
+                <button
+                  type="button"
+                  onClick={() => setPaperFormat('cr80')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                    paperFormat === 'cr80'
+                      ? 'bg-[#20223E] text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  CR80 Card
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaperFormat('a4')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                    paperFormat === 'a4'
+                      ? 'bg-[#20223E] text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  A4 Sheet (100%)
+                </button>
               </div>
             </div>
 

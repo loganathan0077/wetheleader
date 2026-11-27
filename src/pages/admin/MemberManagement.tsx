@@ -3,7 +3,12 @@ import { useLanguage } from '../../context/LanguageContext';
 import { Member, MemberFormData } from '../../types';
 import { memberService } from '../../services/memberService';
 import { CR80MembershipCard } from '../../components/CR80MembershipCard';
-import { exportCardPdf } from '../../utils/idCardExport';
+import { 
+  exportCardPdf, 
+  exportCardPng, 
+  exportBothCardsZip, 
+  printCardIsolated 
+} from '../../utils/idCardExport';
 import QRCode from 'qrcode';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -33,7 +38,9 @@ import {
   Info,
   Camera,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  Image,
+  ChevronDown
 } from 'lucide-react';
 import { compressImageFile, isValidImageFile, formatFileSize } from '../../utils/imageCompressor';
 
@@ -71,6 +78,10 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
   const [printCardSide, setPrintCardSide] = useState<'both' | 'front' | 'back'>('both');
   const [printQrCodeUrl, setPrintQrCodeUrl] = useState<string>('');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isGeneratingPng, setIsGeneratingPng] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [printPaperFormat, setPrintPaperFormat] = useState<'cr80' | 'a4'>('cr80');
+  const [showPngMenu, setShowPngMenu] = useState(false);
   const frontCardRef = useRef<HTMLDivElement>(null);
   const backCardRef = useRef<HTMLDivElement>(null);
 
@@ -460,12 +471,50 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
     }
   };
 
-  // Print ID Card Action (triggers browser print dialog)
-  const handlePrintCard = () => {
-    window.print();
+  // Isolated CR80 / A4 Print Action (Guaranteed 2 pages without clipping or enlargement)
+  const handlePrintCard = async () => {
+    if (!frontCardRef.current || !printingMember) return;
+    setIsPrinting(true);
+    try {
+      await printCardIsolated(
+        frontCardRef.current,
+        backCardRef.current,
+        printingMember,
+        { mode: printCardSide, paperFormat: printPaperFormat }
+      );
+    } catch (err) {
+      console.error('Print card error:', err);
+    } finally {
+      setIsPrinting(false);
+    }
   };
 
-  // Generate exact CR80 PDF from modal (using shared high-res font & image pipeline)
+  // High-Resolution 480 DPI PNG Export (1016 × 1612 px per side)
+  const handleDownloadPng = async (variant: 'FRONT' | 'BACK' | 'BOTH') => {
+    if (!frontCardRef.current || !printingMember) return;
+    setIsGeneratingPng(true);
+    setShowPngMenu(false);
+
+    try {
+      if (variant === 'BOTH' && backCardRef.current) {
+        await exportBothCardsZip(
+          frontCardRef.current,
+          backCardRef.current,
+          printingMember
+        );
+      } else if (variant === 'BACK' && backCardRef.current) {
+        await exportCardPng(backCardRef.current, printingMember, 'BACK');
+      } else {
+        await exportCardPng(frontCardRef.current, printingMember, 'FRONT');
+      }
+    } catch (err) {
+      console.error('Error generating CR80 PNG:', err);
+    } finally {
+      setIsGeneratingPng(false);
+    }
+  };
+
+  // Generate exact 2-page CR80 PDF from modal (using 480 DPI pipeline)
   const handleDownloadPdfFromModal = async () => {
     if (!frontCardRef.current || !printingMember) return;
     setIsGeneratingPdf(true);
@@ -920,47 +969,84 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
                 <Info className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                 <div className="leading-relaxed">
                   <span className="font-bold block text-emerald-900 mb-0.5">
-                    {isTamil ? 'அச்சு அமைப்புகள் வழிகாட்டுதல் (Duplex Printing)' : 'Physical CR80 Card Printing Guide:'}
+                    {isTamil ? 'அச்சு அமைப்புகள் வழிகாட்டுதல் (Duplex Printing):' : 'Physical CR80 Card Printing Guide:'}
                   </span>
-                  <span>{t('duplexPrintHelp')}</span>
+                  <span>
+                    {isTamil 
+                      ? 'இருபுறமும் அச்சிட "Flip on short edge" தேர்வு செய்யவும். பேப்பர் பிரிண்டரில் அச்சிட "A4 Sheet" தேர்வு செய்து Scale 100% வைக்கவும்.' 
+                      : 'For 2-sided duplex printing, set printer to "Flip on short edge". For office paper printers, select A4 Sheet format and print at 100% scale (no scaling).'}
+                  </span>
                 </div>
               </div>
 
-              {/* Side Selector Tabs */}
-              <div className="flex items-center justify-center gap-2 no-print">
-                <button
-                  type="button"
-                  onClick={() => setPrintCardSide('both')}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    printCardSide === 'both'
-                      ? 'bg-[#20223E] text-white shadow-xs'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                >
-                  {isTamil ? 'இருபுறமும்' : 'Both Sides'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPrintCardSide('front')}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    printCardSide === 'front'
-                      ? 'bg-[#20223E] text-white shadow-xs'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                >
-                  {isTamil ? 'முன்பக்கம் மட்டும்' : 'Front Only'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPrintCardSide('back')}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    printCardSide === 'back'
-                      ? 'bg-[#20223E] text-white shadow-xs'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                >
-                  {isTamil ? 'பின்பக்கம் மட்டும்' : 'Back Only'}
-                </button>
+              {/* Target Paper & Side Controls */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded-xl bg-slate-100 border border-slate-200 text-xs no-print">
+                {/* Side Selection */}
+                <div className="flex items-center gap-1.5 w-full sm:w-auto justify-center">
+                  <span className="font-bold text-slate-700 mr-1">{isTamil ? 'பக்கம்:' : 'Side:'}</span>
+                  <button
+                    type="button"
+                    onClick={() => setPrintCardSide('both')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      printCardSide === 'both'
+                        ? 'bg-[#20223E] text-white shadow-xs'
+                        : 'bg-white text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {isTamil ? 'இருபுறமும்' : 'Both Sides'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPrintCardSide('front')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      printCardSide === 'front'
+                        ? 'bg-[#20223E] text-white shadow-xs'
+                        : 'bg-white text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {isTamil ? 'முன்பக்கம்' : 'Front Only'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPrintCardSide('back')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      printCardSide === 'back'
+                        ? 'bg-[#20223E] text-white shadow-xs'
+                        : 'bg-white text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {isTamil ? 'பின்பக்கம்' : 'Back Only'}
+                  </button>
+                </div>
+
+                {/* Paper Format */}
+                <div className="flex items-center gap-1.5 w-full sm:w-auto justify-center">
+                  <span className="font-bold text-slate-700 mr-1">{isTamil ? 'அளவு:' : 'Format:'}</span>
+                  <button
+                    type="button"
+                    onClick={() => setPrintPaperFormat('cr80')}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      printPaperFormat === 'cr80'
+                        ? 'bg-[#91BD32] text-[#20223E] shadow-xs'
+                        : 'bg-white text-slate-600 hover:bg-slate-200'
+                    }`}
+                    title="Direct CR80 Physical Card (53.98 × 85.60 mm)"
+                  >
+                    CR80 Card
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPrintPaperFormat('a4')}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      printPaperFormat === 'a4'
+                        ? 'bg-[#91BD32] text-[#20223E] shadow-xs'
+                        : 'bg-white text-slate-600 hover:bg-slate-200'
+                    }`}
+                    title="A4 / Letter Sheet 100% Actual Size with Duplex Alignment"
+                  >
+                    A4 Sheet (100%)
+                  </button>
+                </div>
               </div>
 
               {/* EXACT CR80 CARD CONTAINER (Responsive: Side-by-Side on Desktop, Stacked on Mobile) */}
@@ -1001,36 +1087,94 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
             {/* Modal Actions Footer */}
             <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 flex-shrink-0 no-print">
               <span className="text-xs text-slate-500 font-medium">
-                Standard CR80 ATM Card Size: <strong>53.98 mm × 85.60 mm</strong>
+                Standard CR80 Size: <strong>53.98 mm × 85.60 mm</strong>
               </span>
 
-              <div className="flex items-center gap-2.5 w-full sm:w-auto">
+              <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
                 <button
                   type="button"
                   onClick={() => setPrintingMember(null)}
-                  className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                  className="px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
                 >
                   {t('cancel')}
                 </button>
 
+                {/* Download PNG (480 DPI - 1016 × 1612 px) */}
+                <div className="relative">
+                  <div className="inline-flex rounded-xl shadow-xs">
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadPng('BOTH')}
+                      disabled={isGeneratingPng}
+                      className="px-3.5 py-2.5 rounded-l-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                      title="Download 1016 × 1612 px PNG Cards"
+                    >
+                      <Image className="w-4 h-4 text-emerald-600" />
+                      <span>{isGeneratingPng ? 'Generating...' : 'Download PNG'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowPngMenu(!showPngMenu)}
+                      disabled={isGeneratingPng}
+                      className="px-2 py-2.5 rounded-r-xl bg-slate-200 hover:bg-slate-300 border-l border-slate-300 text-slate-700 cursor-pointer disabled:opacity-50"
+                      title="PNG Export Options"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {showPngMenu && (
+                    <div className="absolute right-0 bottom-full mb-2 w-52 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 text-xs animate-fadeIn">
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadPng('BOTH')}
+                        className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between font-bold text-slate-800"
+                      >
+                        <span>Download Both (ZIP)</span>
+                        <span className="text-[10px] text-emerald-600 font-mono">1016×1612</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadPng('FRONT')}
+                        className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between text-slate-700"
+                      >
+                        <span>Front Side PNG</span>
+                        <span className="text-[10px] text-slate-400 font-mono">1016×1612</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadPng('BACK')}
+                        className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between text-slate-700"
+                      >
+                        <span>Back Side PNG</span>
+                        <span className="text-[10px] text-slate-400 font-mono">1016×1612</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Download PDF */}
                 <button
                   type="button"
                   onClick={handleDownloadPdfFromModal}
                   disabled={isGeneratingPdf}
-                  className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
-                  title="Download CR80 PDF"
+                  className="px-3.5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                  title="Download Exact 2-Page CR80 PDF"
                 >
                   <Download className="w-4 h-4 text-[#2878B9]" />
-                  <span>{isGeneratingPdf ? t('loading') : 'PDF'}</span>
+                  <span>{isGeneratingPdf ? t('loading') : 'Download PDF'}</span>
                 </button>
 
+                {/* Print Card */}
                 <button
                   type="button"
                   onClick={handlePrintCard}
-                  className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-[#20223E] hover:bg-[#2c2f54] text-white text-xs font-bold flex items-center justify-center gap-2 shadow transition-all cursor-pointer"
+                  disabled={isPrinting}
+                  className="px-4 py-2.5 rounded-xl bg-[#20223E] hover:bg-[#2c2f54] text-white text-xs font-bold flex items-center justify-center gap-2 shadow transition-all cursor-pointer disabled:opacity-50"
+                  title="Print Exactly 2 Pages (Flip on Short Edge)"
                 >
                   <Printer className="w-4 h-4 text-[#91BD32]" />
-                  <span>{t('printIdCard')}</span>
+                  <span>{isPrinting ? 'Preparing...' : t('printIdCard')}</span>
                 </button>
               </div>
             </div>

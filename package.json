@@ -12,9 +12,11 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
     "@tailwindcss/vite": "^4.3.5",
+    "@types/jszip": "^3.4.0",
     "clsx": "^2.1.1",
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.2",
+    "jszip": "^3.10.2",
     "lucide-react": "^0.475.0",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
