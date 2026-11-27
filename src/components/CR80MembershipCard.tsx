@@ -1,7 +1,8 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState, useEffect } from 'react';
 import { Member } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { MapPin } from 'lucide-react';
+import { getMemberPhotoSignedUrl } from '../lib/supabase';
 
 interface CR80MembershipCardProps {
   member: Member;
@@ -85,6 +86,33 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
   ({ member, side, qrCodeUrl }, ref) => {
     const { language } = useLanguage();
     const isTamil = language === 'ta';
+
+    const [photoUrl, setPhotoUrl] = useState<string | null>(member.profile_photo_url || (member as any).photo_path || null);
+    const [photoError, setPhotoError] = useState(false);
+
+    useEffect(() => {
+      const initial = member.profile_photo_url || (member as any).photo_path || null;
+      if (!initial) {
+        setPhotoUrl(null);
+        return;
+      }
+      if (initial.startsWith('data:') || initial.startsWith('http://') || initial.startsWith('https://') || initial.startsWith('blob:')) {
+        setPhotoUrl(initial);
+        setPhotoError(false);
+      } else {
+        // Resolve signed URL for private Supabase storage path
+        getMemberPhotoSignedUrl(initial).then(signed => {
+          if (signed) {
+            setPhotoUrl(signed);
+            setPhotoError(false);
+          } else {
+            setPhotoError(true);
+          }
+        }).catch(() => {
+          setPhotoError(true);
+        });
+      }
+    }, [member.profile_photo_url, (member as any).photo_path]);
 
     const formattedDate = member.registration_date
       ? new Date(member.registration_date).toLocaleDateString('en-IN', {
@@ -170,10 +198,12 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
             
             {/* Photo Frame (Passport proportion 86 × 102 px) */}
             <div className="w-[86px] h-[102px] rounded-xl border-[2.5px] border-[#91BD32] p-0.5 bg-white shadow-sm overflow-hidden relative flex items-center justify-center flex-shrink-0">
-              {member.profile_photo_url ? (
+              {photoUrl && !photoError ? (
                 <img
-                  src={member.profile_photo_url}
+                  src={photoUrl}
                   alt={member.full_name}
+                  crossOrigin="anonymous"
+                  onError={() => setPhotoError(true)}
                   className="w-full h-full object-cover rounded-[8px]"
                 />
               ) : (

@@ -55,6 +55,7 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
   const [selectedWard, setSelectedWard] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
@@ -270,6 +271,9 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
         if (regDateStr > dateTo) return false;
       }
 
+      // 8. Approval status filter
+      if (selectedStatus && (m.approval_status || 'approved') !== selectedStatus) return false;
+
       return true;
     });
   }, [
@@ -280,6 +284,7 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
     selectedWard, 
     selectedDistrict, 
     selectedYear, 
+    selectedStatus,
     dateFrom, 
     dateTo
   ]);
@@ -292,8 +297,19 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
     setSelectedWard('');
     setSelectedDistrict('');
     setSelectedYear('');
+    setSelectedStatus('');
     setDateFrom('');
     setDateTo('');
+  };
+
+  // Quick Approval Status Update (Approve / Reject / Pending)
+  const handleUpdateApproval = async (id: string, status: 'approved' | 'rejected' | 'pending') => {
+    try {
+      await memberService.updateMemberApproval(id, status);
+      await fetchMembers();
+    } catch (err) {
+      console.error('Error updating approval status:', err);
+    }
   };
 
   // Open Edit Modal
@@ -574,6 +590,21 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
             </select>
           </div>
 
+          {/* Status Filter (Pending / Approved / Rejected) */}
+          <div>
+            <label className="block text-[11px] font-bold text-slate-600 mb-1">{language === 'ta' ? 'நிலை' : 'Status'}</label>
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="w-full p-2 text-xs rounded-lg border border-slate-300 bg-white focus:ring-[#91BD32]"
+            >
+              <option value="">{language === 'ta' ? 'அனைத்து நிலைகளும்' : 'All Statuses'}</option>
+              <option value="pending">{language === 'ta' ? 'நிலுவையில் (Pending)' : 'Pending'}</option>
+              <option value="approved">{language === 'ta' ? 'அங்கீகரிக்கப்பட்டது (Approved)' : 'Approved'}</option>
+              <option value="rejected">{language === 'ta' ? 'நிராகரிக்கப்பட்டது (Rejected)' : 'Rejected'}</option>
+            </select>
+          </div>
+
           {/* Reset Button */}
           <div className="flex items-end col-span-2 sm:col-span-1">
             <button
@@ -619,9 +650,24 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-[#2878B9]">
-                      {m.membership_number}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-[#2878B9]">
+                        {m.membership_number}
+                      </span>
+                      {m.approval_status === 'pending' ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300">
+                          {language === 'ta' ? 'நிலுவையில்' : 'Pending'}
+                        </span>
+                      ) : m.approval_status === 'rejected' ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-red-100 text-red-800 border border-red-300">
+                          {language === 'ta' ? 'நிராகரிக்கப்பட்டது' : 'Rejected'}
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          {language === 'ta' ? 'அங்கீகரிக்கப்பட்டது' : 'Approved'}
+                        </span>
+                      )}
+                    </div>
                     <h3 className="text-base font-bold text-[#20223E] mt-1">{m.full_name}</h3>
                   </div>
                   <span className="text-[11px] text-slate-400">
@@ -642,36 +688,59 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
                   </div>
                 </div>
 
-                {/* Actions: View, Edit, Print ID Card, Delete */}
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-2">
-                  <button
-                    onClick={() => setViewingMember(m)}
-                    className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-[#20223E] cursor-pointer"
-                    title={t('view')}
-                  >
-                    <Eye className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleOpenEdit(m)}
-                    className="p-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#2878B9] cursor-pointer"
-                    title={t('edit')}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setPrintingMember(m)}
-                    className="p-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 cursor-pointer"
-                    title={t('printIdCard')}
-                  >
-                    <Printer className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setDeletingMember(m)}
-                    className="p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer"
-                    title={t('delete')}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                {/* Actions: View, Edit, Print ID Card, Delete, and Quick Approve/Reject */}
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    {m.approval_status === 'pending' && (
+                      <>
+                        <button
+                          onClick={() => handleUpdateApproval(m.id, 'approved')}
+                          className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1 cursor-pointer"
+                          title={language === 'ta' ? 'அங்கீகரி' : 'Approve'}
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>{language === 'ta' ? 'அங்கீகரி' : 'Approve'}</span>
+                        </button>
+                        <button
+                          onClick={() => handleUpdateApproval(m.id, 'rejected')}
+                          className="px-2 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                          title={language === 'ta' ? 'நிராகரி' : 'Reject'}
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setViewingMember(m)}
+                      className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-[#20223E] cursor-pointer"
+                      title={t('view')}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleOpenEdit(m)}
+                      className="p-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#2878B9] cursor-pointer"
+                      title={t('edit')}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setPrintingMember(m)}
+                      className="p-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 cursor-pointer"
+                      title={t('printIdCard')}
+                    >
+                      <Printer className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setDeletingMember(m)}
+                      className="p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer"
+                      title={t('delete')}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -690,6 +759,7 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
                     <th className="py-3.5 px-4">{t('streetLabel')}</th>
                     <th className="py-3.5 px-4">{t('colWard')}</th>
                     <th className="py-3.5 px-4">{t('colDistrict')}</th>
+                    <th className="py-3.5 px-4">{language === 'ta' ? 'நிலை' : 'Status'}</th>
                     <th className="py-3.5 px-4">{t('colRegDate')}</th>
                     <th className="py-3.5 px-4 text-right">{t('colActions')}</th>
                   </tr>
@@ -722,11 +792,46 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
                       <td className="py-3.5 px-4">
                         {m.district}
                       </td>
+                      <td className="py-3.5 px-4 text-xs font-semibold">
+                        {m.approval_status === 'pending' ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-100 text-amber-800 border border-amber-300">
+                            {language === 'ta' ? 'நிலுவையில்' : 'Pending'}
+                          </span>
+                        ) : m.approval_status === 'rejected' ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-red-100 text-red-800 border border-red-300">
+                            {language === 'ta' ? 'நிராகரிக்கப்பட்டது' : 'Rejected'}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            {language === 'ta' ? 'அங்கீகரிக்கப்பட்டது' : 'Approved'}
+                          </span>
+                        )}
+                      </td>
                       <td className="py-3.5 px-4 text-xs text-slate-500">
                         {m.registration_date ? new Date(m.registration_date).toLocaleDateString() : '-'}
                       </td>
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          {/* Quick Approve/Reject for Pending */}
+                          {m.approval_status === 'pending' && (
+                            <>
+                              <button
+                                onClick={() => handleUpdateApproval(m.id, 'approved')}
+                                className="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 cursor-pointer"
+                                title={language === 'ta' ? 'அங்கீகரிக்கவும் (Approve)' : 'Approve'}
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleUpdateApproval(m.id, 'rejected')}
+                                className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer"
+                                title={language === 'ta' ? 'நிராகரிக்கவும் (Reject)' : 'Reject'}
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+
                           {/* View */}
                           <button
                             onClick={() => setViewingMember(m)}
@@ -964,6 +1069,10 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
                   <img 
                     src={viewingMember.profile_photo_url} 
                     alt={viewingMember.full_name}
+                    crossOrigin="anonymous"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = '/logo.svg';
+                    }}
                     className="w-24 h-24 rounded-2xl object-cover mx-auto border-2 border-[#91BD32] shadow"
                   />
                 </div>

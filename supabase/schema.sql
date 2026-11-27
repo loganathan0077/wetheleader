@@ -170,7 +170,7 @@ CREATE TABLE IF NOT EXISTS public.members (
     aadhaar_number TEXT,
     preferred_language TEXT NOT NULL DEFAULT 'ta',
     consent_given BOOLEAN NOT NULL DEFAULT true,
-    approval_status TEXT NOT NULL DEFAULT 'approved' CHECK (approval_status IN ('pending', 'approved', 'rejected')),
+    approval_status TEXT NOT NULL DEFAULT 'pending' CHECK (approval_status IN ('pending', 'approved', 'rejected')),
     registration_date TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL

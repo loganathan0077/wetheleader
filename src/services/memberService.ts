@@ -1,5 +1,5 @@
 import { Member, MemberFormData, DashboardStats } from '../types';
-import { supabase, isSupabaseConfigured, uploadMemberPhoto } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, uploadMemberPhoto, getMemberPhotoSignedUrl } from '../lib/supabase';
 
 const LOCAL_STORAGE_KEY = 'wtl_members_data';
 const COUNTER_STORAGE_KEY = 'wtl_membership_counters';
@@ -89,6 +89,22 @@ const INITIAL_SAMPLE_MEMBERS: Member[] = [
     created_at: new Date().toISOString()
   }
 ];
+
+// Helper to resolve signed photo URL for protected Supabase storage
+async function resolveMemberPhotoUrl(member: Member): Promise<Member> {
+  const photo = member.profile_photo_url || (member as any).photo_path;
+  if (!photo) return member;
+  if (photo.startsWith('http://') || photo.startsWith('https://') || photo.startsWith('data:')) {
+    return member;
+  }
+  try {
+    const signed = await getMemberPhotoSignedUrl(photo);
+    if (signed) {
+      return { ...member, profile_photo_url: signed };
+    }
+  } catch {}
+  return member;
+}
 
 // Helper: load local members
 function getLocalMembers(): Member[] {
@@ -227,25 +243,29 @@ export const memberService = {
           aadhaar_number: formData.aadhaar_number?.trim() || null,
           profile_photo_url: photoPath,
           photo_path: photoPath,
-          approval_status: 'approved',
+          approval_status: 'pending',
           preferred_language: preferredLang,
           consent_given: formData.consent_given,
           registration_date: new Date().toISOString()
         };
 
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('members')
-          .insert([newRecord])
-          .select()
-          .single();
+          .insert([newRecord]);
 
         if (error) {
           console.warn('Supabase insert failed, storing locally:', error);
-        } else if (data) {
+        } else {
+          const registeredMember: Member = {
+            id: newRecord.membership_id,
+            ...newRecord,
+            created_at: newRecord.registration_date,
+            updated_at: newRecord.registration_date
+          } as Member;
           // Also sync to local storage for quick offline access
           const local = getLocalMembers();
-          saveLocalMembers([data as Member, ...local]);
-          return data as Member;
+          saveLocalMembers([registeredMember, ...local]);
+          return registeredMember;
         }
       } catch (err) {
         console.warn('Supabase exception, falling back to local storage:', err);
@@ -275,6 +295,7 @@ export const memberService = {
       voter_id_number: formData.voter_id_number?.trim() || null,
       aadhaar_number: formData.aadhaar_number?.trim() || null,
       profile_photo_url: formData.profile_photo_url || null,
+      approval_status: 'pending',
       preferred_language: preferredLang,
       consent_given: formData.consent_given,
       registration_date: new Date().toISOString(),
@@ -295,16 +316,17 @@ export const memberService = {
         // 1. Try public verification RPC (safe non-sensitive fields)
         const { data: rpcData, error: rpcErr } = await supabase.rpc('verify_member_public', { p_id: id });
         if (!rpcErr && rpcData && rpcData.length > 0) {
-          return rpcData[0] as Member;
+          return await resolveMemberPhotoUrl(rpcData[0] as Member);
         }
 
         // 2. Direct select (allowed for authenticated admin)
         const { data, error } = await supabase.from('members').select('*').eq('id', id).maybeSingle();
-        if (!error && data) return data as Member;
+        if (!error && data) return await resolveMemberPhotoUrl(data as Member);
       } catch {}
     }
     const local = getLocalMembers();
-    return local.find(m => m.id === id || m.membership_number === id) || null;
+    const found = local.find(m => m.id === id || m.membership_number === id) || null;
+    return found ? await resolveMemberPhotoUrl(found) : null;
   },
 
   /**
@@ -337,7 +359,8 @@ export const memberService = {
         });
 
         if (!rpcErr && rpcData && rpcData.length > 0) {
-          return { success: true, member: rpcData[0] as Member };
+          const resolved = await resolveMemberPhotoUrl(rpcData[0] as Member);
+          return { success: true, member: resolved };
         }
 
         // Fallback query if RPC is pending deployment
@@ -355,7 +378,8 @@ export const memberService = {
           });
 
           if (matched) {
-            return { success: true, member: matched };
+            const resolved = await resolveMemberPhotoUrl(matched);
+            return { success: true, member: resolved };
           }
         }
       } catch (err) {
@@ -376,7 +400,8 @@ export const memberService = {
     });
 
     if (matched) {
-      return { success: true, member: matched };
+      const resolved = await resolveMemberPhotoUrl(matched);
+      return { success: true, member: resolved };
     }
 
     return {
@@ -397,8 +422,9 @@ export const memberService = {
         if (!error && data) {
           // Never display mock members when Supabase is connected
           const cleanData = (data as Member[]).filter(m => !isMockMember(m.id));
-          saveLocalMembers(cleanData);
-          return cleanData;
+          const withPhotos = await Promise.all(cleanData.map(resolveMemberPhotoUrl));
+          saveLocalMembers(withPhotos);
+          return withPhotos;
         }
 
         if (error) {

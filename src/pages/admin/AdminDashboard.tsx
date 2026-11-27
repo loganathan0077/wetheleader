@@ -179,6 +179,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onVi
                       <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-100 text-[#2878B9]">
                         {member.membership_number}
                       </span>
+                      {member.approval_status === 'pending' && (
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+                          {language === 'ta' ? 'நிலுவையில்' : 'Pending'}
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs text-slate-500 flex items-center gap-3 mt-1">
                       <span className="flex items-center gap-1">

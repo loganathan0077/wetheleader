@@ -117,7 +117,7 @@ ALTER TABLE public.members ADD COLUMN IF NOT EXISTS willing_to_volunteer TEXT;
 ALTER TABLE public.members ADD COLUMN IF NOT EXISTS hobbies TEXT;
 ALTER TABLE public.members ADD COLUMN IF NOT EXISTS photo_path TEXT;
 ALTER TABLE public.members ADD COLUMN IF NOT EXISTS voter_id TEXT;
-ALTER TABLE public.members ADD COLUMN IF NOT EXISTS approval_status TEXT NOT NULL DEFAULT 'approved';
+ALTER TABLE public.members ADD COLUMN IF NOT EXISTS approval_status TEXT NOT NULL DEFAULT 'pending';
 
 -- Unique constraint on membership_id
 DO $$

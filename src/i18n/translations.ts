@@ -84,6 +84,8 @@ export const translations = {
     photoLabel: "Profile Photo",
     photoUploadHint: "Take a photo or upload an image",
     photoUploadBtn: "Upload Photo",
+    photoTakePhotoBtn: "Take Photo",
+    photoUploadDeviceBtn: "Upload from Device",
     photoRemoveBtn: "Remove",
     photoCompressing: "Compressing photo...",
     photoUploading: "Uploading photo...",
@@ -159,6 +161,8 @@ export const translations = {
 
     // Form Validations
     valNameRequired: "Please enter your full name.",
+    valGenderRequired: "Please select your gender.",
+    valVillageRequired: "Please select or enter your village / town.",
     valMobileRequired: "Please enter your 10-digit mobile number.",
     valDobRequired: "Please enter your date of birth (required for secure ID Card retrieval).",
     valMobileInvalid: "Please enter a valid 10-digit Indian mobile number (6-9 followed by 9 digits).",
@@ -406,6 +410,8 @@ export const translations = {
     photoLabel: "சுயவிவரப் படம்",
     photoUploadHint: "புகைப்படம் எடுக்கவும் அல்லது பதிவேற்றவும்",
     photoUploadBtn: "படம் பதிவேற்று",
+    photoTakePhotoBtn: "படம் எடுக்க",
+    photoUploadDeviceBtn: "சாதனத்திலிருந்து பதிவேற்ற",
     photoRemoveBtn: "நீக்கு",
     photoCompressing: "படம் சுருக்கப்படுகிறது...",
     photoUploading: "படம் பதிவேற்றப்படுகிறது...",
@@ -481,6 +487,8 @@ export const translations = {
 
     // Form Validations
     valNameRequired: "தயவுசெய்து உங்கள் முழு பெயரை உள்ளிடவும்.",
+    valGenderRequired: "தயவுசெய்து உங்கள் பாலினத்தைத் தேர்ந்தெடுக்கவும்.",
+    valVillageRequired: "தயவுசெய்து உங்கள் கிராமம் / ஊரைத் தேர்ந்தெடுக்கவும்.",
     valMobileRequired: "தயவுசெய்து உங்கள் 10 இலக்க கைபேசி எண்ணை உள்ளிடவும்.",
     valDobRequired: "தயவுசெய்து உங்கள் பிறந்த தேதியை உள்ளிடவும் (அடையாள அட்டை பெற தேவை).",
     valMobileInvalid: "சரியான 10 இலக்க இந்திய கைபேசி எண்ணை உள்ளிடவும் (6-9 இல் தொடங்கும் 10 இலக்கங்கள்).",

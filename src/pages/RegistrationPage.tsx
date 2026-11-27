@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { MemberFormData, Member } from '../types';
 import { memberService } from '../services/memberService';
@@ -10,6 +10,7 @@ import {
   MapPin, 
   Briefcase, 
   Camera, 
+  Upload,
   CheckCircle2, 
   AlertCircle, 
   Lock, 
@@ -128,6 +129,10 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
   const [isCompressingPhoto, setIsCompressingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
 
+  // Hidden file inputs for direct camera capture and device gallery picker
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+
   // Preserve form draft across mobile app switches or memory reloads
   useEffect(() => {
     try {
@@ -178,7 +183,17 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
       errors.date_of_birth = t('valDobRequired');
     }
 
-    // 4. Aadhaar Number (if provided, must be 12 digits)
+    // 4. Mandatory Gender
+    if (!formData.gender || !formData.gender.trim()) {
+      errors.gender = t('valGenderRequired');
+    }
+
+    // 5. Mandatory Village / Town
+    if (!formData.village_name || !formData.village_name.trim()) {
+      errors.village_name = t('valVillageRequired');
+    }
+
+    // 6. Aadhaar Number (if provided, must be 12 digits)
     if (formData.aadhaar_number && formData.aadhaar_number.trim()) {
       const cleanAadhaar = formData.aadhaar_number.replace(/\D/g, '');
       if (cleanAadhaar.length !== 12) {
@@ -526,36 +541,64 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
               </div>
               <div className="flex-1 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <label className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
-                    isCompressingPhoto 
-                      ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                      : 'bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-[#20223E] cursor-pointer'
-                  }`}>
+                  {/* Option A: Take Photo directly via mobile camera */}
+                  <button
+                    type="button"
+                    onClick={() => cameraInputRef.current?.click()}
+                    disabled={isCompressingPhoto || isUploadingPhoto || isSubmitting}
+                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                      isCompressingPhoto 
+                        ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                        : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white'
+                    }`}
+                  >
                     {isCompressingPhoto ? (
-                      <Loader2 className="w-4 h-4 text-[#91BD32] animate-spin" />
+                      <Loader2 className="w-4 h-4 text-white animate-spin" />
                     ) : (
-                      <Camera className="w-4 h-4 text-[#2878B9]" />
+                      <Camera className="w-4 h-4 text-white" />
                     )}
-                    <span>
-                      {isCompressingPhoto 
-                        ? t('photoCompressing') 
-                        : photoPreview 
-                          ? (language === 'ta' ? 'மாற்று' : 'Change Photo') 
-                          : t('photoUploadBtn')}
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePhotoUpload}
-                      disabled={isCompressingPhoto || isUploadingPhoto || isSubmitting}
-                      className="hidden"
-                    />
-                  </label>
+                    <span>{t('photoTakePhotoBtn')}</span>
+                  </button>
+
+                  {/* Option B: Upload from Device gallery / files */}
+                  <button
+                    type="button"
+                    onClick={() => galleryInputRef.current?.click()}
+                    disabled={isCompressingPhoto || isUploadingPhoto || isSubmitting}
+                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                      isCompressingPhoto 
+                        ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                        : 'bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-[#20223E] border border-slate-300'
+                    }`}
+                  >
+                    <Upload className="w-4 h-4 text-[#2878B9]" />
+                    <span>{t('photoUploadDeviceBtn')}</span>
+                  </button>
+
+                  {/* Hidden Inputs for Direct Camera & Gallery/Device Picker */}
+                  <input
+                    ref={cameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handlePhotoUpload}
+                    disabled={isCompressingPhoto || isUploadingPhoto || isSubmitting}
+                    className="hidden"
+                  />
+                  <input
+                    ref={galleryInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    disabled={isCompressingPhoto || isUploadingPhoto || isSubmitting}
+                    className="hidden"
+                  />
+
                   {photoPreview && !isCompressingPhoto && (
                     <button
                       type="button"
                       onClick={removePhoto}
-                      className="text-xs font-semibold text-red-600 hover:underline px-2 py-1"
+                      className="text-xs font-semibold text-red-600 hover:underline px-2 py-1 cursor-pointer"
                     >
                       {t('photoRemoveBtn')}
                     </button>
@@ -590,22 +633,29 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
             </div>
           </div>
 
-          {/* Gender */}
+          {/* Gender (MANDATORY FIELD) */}
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
-              {t('genderLabel')}
+              {t('genderLabel')} <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.gender}
               onChange={(e) => handleInputChange('gender', e.target.value)}
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-[#F5F7FA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#91BD32]"
+              className={`w-full px-3.5 py-2.5 text-sm rounded-xl border ${
+                fieldErrors.gender ? 'border-red-400 bg-red-50/40' : 'border-slate-300 bg-[#F5F7FA]'
+              } focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#91BD32]`}
             >
               <option value="">-- {t('genderSelect')} --</option>
               <option value="Male">{t('genderMale')}</option>
               <option value="Female">{t('genderFemale')}</option>
               <option value="Other">{t('genderOther')}</option>
-              <option value="Prefer not to say">{t('genderPreferNot')}</option>
             </select>
+            {fieldErrors.gender && (
+              <p className="mt-1 text-xs text-red-600 font-semibold flex items-center gap-1 animate-fadeIn">
+                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>{fieldErrors.gender}</span>
+              </p>
+            )}
           </div>
         </div>
 
@@ -623,20 +673,28 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
             </span>
           </div>
 
-          {/* Village Name & Street Name Grid (Village and Street must be separate fields) */}
+          {/* Village Name & Street Name Grid (Village is MANDATORY) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Village Name */}
+            {/* Village Name (MANDATORY FIELD) */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                {t('villageLabel')}
+                {t('villageLabel')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={formData.village_name}
                 onChange={(e) => handleInputChange('village_name', e.target.value)}
                 placeholder={t('villagePlaceholder')}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-[#F5F7FA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#91BD32]"
+                className={`w-full px-3.5 py-2.5 text-sm rounded-xl border ${
+                  fieldErrors.village_name ? 'border-red-400 bg-red-50/40' : 'border-slate-300 bg-[#F5F7FA]'
+                } focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#91BD32]`}
               />
+              {fieldErrors.village_name && (
+                <p className="mt-1 text-xs text-red-600 font-semibold flex items-center gap-1 animate-fadeIn">
+                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span>{fieldErrors.village_name}</span>
+                </p>
+              )}
               <p className="mt-1 text-[10px] text-slate-400">
                 {language === 'ta' ? 'தமிழ் அல்லது ஆங்கிலத்தில் எழுதலாம்' : 'Supports Tamil and English input'}
               </p>

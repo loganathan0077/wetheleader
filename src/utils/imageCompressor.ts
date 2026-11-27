@@ -63,21 +63,66 @@ export function formatFileSize(kilobytes: number): string {
 }
 
 /**
- * Sniffs width and height directly from JPEG / PNG / WebP headers in milliseconds.
- * Reads only the first 64 KB of the file, allocating < 0.1 MB of RAM even for a 100 MB file.
+ * Sniffs width, height and EXIF orientation directly from image headers in milliseconds.
+ * Reads up to the first 512 KB of the file, safely allocating < 0.6 MB of RAM even for a 100 MB file.
  */
 async function sniffImageDimensions(file: File | Blob): Promise<{ width: number; height: number } | null> {
   try {
-    const slice = file.slice(0, 65536);
+    // 512 KB slice covers large camera EXIF/APP1 blocks (which can be 64KB - 200KB on Samsung/Xiaomi)
+    const slice = file.slice(0, 524288);
     const buffer = await slice.arrayBuffer();
     const bytes = new Uint8Array(buffer);
 
     // 1. JPEG Check (FF D8)
     if (bytes[0] === 0xFF && bytes[1] === 0xD8) {
       let offset = 2;
+      let rawWidth = 0;
+      let rawHeight = 0;
+      let orientation = 1;
+
       while (offset < bytes.length - 8) {
         if (bytes[offset] !== 0xFF) break;
         const marker = bytes[offset + 1];
+
+        // APP1 Marker (0xFFE1) - Parse EXIF for Orientation
+        if (marker === 0xE1) {
+          const segLength = (bytes[offset + 2] << 8) | bytes[offset + 3];
+          // Check for 'Exif\0\0'
+          if (
+            bytes[offset + 4] === 0x45 &&
+            bytes[offset + 5] === 0x78 &&
+            bytes[offset + 6] === 0x69 &&
+            bytes[offset + 7] === 0x66 &&
+            bytes[offset + 8] === 0x00 &&
+            bytes[offset + 9] === 0x00
+          ) {
+            const tiffStart = offset + 10;
+            const isLittleEndian = bytes[tiffStart] === 0x49 && bytes[tiffStart + 1] === 0x49; // 'II' vs 'MM'
+            const get16 = (o: number) => isLittleEndian ? (bytes[o] | (bytes[o + 1] << 8)) : ((bytes[o] << 8) | bytes[o + 1]);
+            const get32 = (o: number) => isLittleEndian 
+              ? (bytes[o] | (bytes[o + 1] << 8) | (bytes[o + 2] << 16) | (bytes[o + 3] << 24))
+              : ((bytes[o] << 24) | (bytes[o + 1] << 16) | (bytes[o + 2] << 8) | bytes[o + 3]);
+
+            if (get16(tiffStart + 2) === 0x002A) {
+              const ifdOffset = get32(tiffStart + 4);
+              if (ifdOffset >= 8 && tiffStart + ifdOffset < bytes.length - 2) {
+                const numEntries = get16(tiffStart + ifdOffset);
+                let entryPtr = tiffStart + ifdOffset + 2;
+                for (let i = 0; i < numEntries && entryPtr < bytes.length - 12; i++) {
+                  const tag = get16(entryPtr);
+                  if (tag === 0x0112) { // Orientation tag
+                    orientation = get16(entryPtr + 8);
+                    break;
+                  }
+                  entryPtr += 12;
+                }
+              }
+            }
+          }
+          offset += segLength + 2;
+          continue;
+        }
+
         // SOF markers that define width and height (SOF0, SOF1, SOF2, etc.)
         if (
           (marker >= 0xC0 && marker <= 0xC3) ||
@@ -85,12 +130,20 @@ async function sniffImageDimensions(file: File | Blob): Promise<{ width: number;
           (marker >= 0xC9 && marker <= 0xCB) ||
           (marker >= 0xCD && marker <= 0xCF)
         ) {
-          const height = (bytes[offset + 5] << 8) | bytes[offset + 6];
-          const width = (bytes[offset + 7] << 8) | bytes[offset + 8];
-          if (width > 0 && height > 0) return { width, height };
+          rawHeight = (bytes[offset + 5] << 8) | bytes[offset + 6];
+          rawWidth = (bytes[offset + 7] << 8) | bytes[offset + 8];
+          break;
         }
         const segmentLength = (bytes[offset + 2] << 8) | bytes[offset + 3];
         offset += segmentLength + 2;
+      }
+
+      if (rawWidth > 0 && rawHeight > 0) {
+        // If EXIF orientation indicates 90° or 270° rotation (5, 6, 7, 8), swap width and height
+        if (orientation >= 5 && orientation <= 8) {
+          return { width: rawHeight, height: rawWidth };
+        }
+        return { width: rawWidth, height: rawHeight };
       }
     }
 
@@ -125,7 +178,7 @@ async function sniffImageDimensions(file: File | Blob): Promise<{ width: number;
       }
     }
   } catch {
-    // If fast sniffing fails, fallback to standard image loader
+    // If fast sniffing fails, fallback gracefully
   }
   return null;
 }
@@ -194,39 +247,46 @@ export async function compressImageFile(
   // Decodes directly to the downscaled size in native code, using only ~1.5 MB RAM instead of 150 MB!
   if (typeof window !== 'undefined' && 'createImageBitmap' in window) {
     try {
-      let bitmap: ImageBitmap;
+      let bitmap: ImageBitmap | null = null;
       try {
-        bitmap = await createImageBitmap(file, {
+        bitmap = await (createImageBitmap as any)(file, {
           resizeWidth: targetWidth,
           resizeHeight: targetHeight,
           resizeQuality: 'high',
+          imageOrientation: 'from-image',
         });
       } catch {
-        // Fallback if resize options are unsupported in older engines
-        bitmap = await createImageBitmap(file);
+        try {
+          bitmap = await createImageBitmap(file, {
+            resizeWidth: targetWidth,
+            resizeHeight: targetHeight,
+            resizeQuality: 'high',
+          });
+        } catch {
+          // Never perform unconstrained createImageBitmap(file) without resize dimensions on mobile camera photos!
+          bitmap = null;
+        }
       }
 
-      targetWidth = bitmap.width > maxDim || bitmap.height > maxDim 
-        ? calculateTargetDimensions(bitmap.width, bitmap.height, maxDim).width 
-        : bitmap.width;
-      targetHeight = bitmap.width > maxDim || bitmap.height > maxDim 
-        ? calculateTargetDimensions(bitmap.width, bitmap.height, maxDim).height 
-        : bitmap.height;
+      if (bitmap) {
+        targetWidth = bitmap.width;
+        targetHeight = bitmap.height;
 
-      canvas.width = targetWidth;
-      canvas.height = targetHeight;
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
 
-      // Fill white background for clean transparency handling
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, targetWidth, targetHeight);
+        // Fill white background for clean transparency handling
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, targetWidth, targetHeight);
 
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
 
-      // Immediately close and release native ImageBitmap memory
-      bitmap.close();
-      decodedSuccess = true;
+        // Immediately close and release native ImageBitmap memory
+        bitmap.close();
+        decodedSuccess = true;
+      }
     } catch {
       decodedSuccess = false;
     }
