@@ -3,11 +3,13 @@ import { useLanguage } from '../../context/LanguageContext';
 import { Member, MemberFormData } from '../../types';
 import { memberService } from '../../services/memberService';
 import { CR80MembershipCard } from '../../components/CR80MembershipCard';
+import { MobileCardImageViewerModal } from '../../components/MobileCardImageViewerModal';
 import { 
   exportCardPdf, 
   exportCardPng, 
   exportBothCardsZip, 
-  printCardIsolated 
+  printCardIsolated,
+  captureCardCanvas
 } from '../../utils/idCardExport';
 import QRCode from 'qrcode';
 import jsPDF from 'jspdf';
@@ -40,7 +42,8 @@ import {
   Loader2,
   CheckCircle2,
   Image,
-  ChevronDown
+  ChevronDown,
+  Smartphone
 } from 'lucide-react';
 import { compressImageFile, isValidImageFile, formatFileSize } from '../../utils/imageCompressor';
 
@@ -82,6 +85,10 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
   const [isPrinting, setIsPrinting] = useState(false);
   const [printPaperFormat, setPrintPaperFormat] = useState<'cr80' | 'a4'>('cr80');
   const [showPngMenu, setShowPngMenu] = useState(false);
+  const [adminMobileViewOpen, setAdminMobileViewOpen] = useState(false);
+  const [adminFrontPngUrl, setAdminFrontPngUrl] = useState<string | null>(null);
+  const [adminBackPngUrl, setAdminBackPngUrl] = useState<string | null>(null);
+  const [isAdminGeneratingMobile, setIsAdminGeneratingMobile] = useState(false);
   const frontCardRef = useRef<HTMLDivElement>(null);
   const backCardRef = useRef<HTMLDivElement>(null);
 
@@ -530,6 +537,31 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
       console.error('Error generating CR80 PDF from print modal:', err);
     } finally {
       setIsGeneratingPdf(false);
+    }
+  };
+
+  // Open Mobile Card Image Viewer (Long-Press Save to Photos)
+  const handleOpenAdminMobileViewer = async () => {
+    if (!printingMember || !frontCardRef.current || !backCardRef.current) return;
+    setIsAdminGeneratingMobile(true);
+    try {
+      let fData = adminFrontPngUrl;
+      let bData = adminBackPngUrl;
+      if (!fData) {
+        const fCanvas = await captureCardCanvas(frontCardRef.current);
+        fData = fCanvas.toDataURL('image/png', 1.0);
+        setAdminFrontPngUrl(fData);
+      }
+      if (!bData) {
+        const bCanvas = await captureCardCanvas(backCardRef.current);
+        bData = bCanvas.toDataURL('image/png', 1.0);
+        setAdminBackPngUrl(bData);
+      }
+      setAdminMobileViewOpen(true);
+    } catch (err) {
+      console.error('Error opening admin mobile viewer:', err);
+    } finally {
+      setIsAdminGeneratingMobile(false);
     }
   };
 
@@ -1165,6 +1197,18 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
                   <span>{isGeneratingPdf ? t('loading') : 'Download PDF'}</span>
                 </button>
 
+                {/* Mobile Long-Press Image Saver */}
+                <button
+                  type="button"
+                  onClick={handleOpenAdminMobileViewer}
+                  disabled={isAdminGeneratingMobile}
+                  className="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                  title="View as Mobile Images & Long-Press Save"
+                >
+                  <Smartphone className="w-4 h-4 text-emerald-200" />
+                  <span>{isAdminGeneratingMobile ? 'Preparing...' : 'Mobile Save'}</span>
+                </button>
+
                 {/* Print Card */}
                 <button
                   type="button"
@@ -1181,6 +1225,18 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
 
           </div>
         </div>
+      )}
+
+      {/* ADMIN MOBILE CARD IMAGE VIEWER MODAL */}
+      {printingMember && (
+        <MobileCardImageViewerModal
+          isOpen={adminMobileViewOpen}
+          onClose={() => setAdminMobileViewOpen(false)}
+          frontImageSrc={adminFrontPngUrl}
+          backImageSrc={adminBackPngUrl}
+          member={printingMember}
+          onDownloadPdf={handleDownloadPdfFromModal}
+        />
       )}
 
       {/* VIEW MEMBER MODAL */}

@@ -3,11 +3,13 @@ import { useLanguage } from '../context/LanguageContext';
 import { Member } from '../types';
 import { memberService } from '../services/memberService';
 import { CR80MembershipCard } from '../components/CR80MembershipCard';
+import { MobileCardImageViewerModal } from '../components/MobileCardImageViewerModal';
 import { 
   exportCardPdf, 
   exportCardPng, 
   exportBothCardsZip, 
-  printCardIsolated 
+  printCardIsolated,
+  captureCardCanvas
 } from '../utils/idCardExport';
 import QRCode from 'qrcode';
 import {
@@ -25,7 +27,8 @@ import {
   RefreshCw,
   Image,
   ChevronDown,
-  Info
+  Info,
+  Smartphone
 } from 'lucide-react';
 
 interface DownloadIdCardPageProps {
@@ -51,9 +54,39 @@ export const DownloadIdCardPage: React.FC<DownloadIdCardPageProps> = ({ onBackTo
   const [paperFormat, setPaperFormat] = useState<'cr80' | 'a4'>('cr80');
   const [showPngMenu, setShowPngMenu] = useState(false);
   const [activeCardSide, setActiveCardSide] = useState<'both' | 'front' | 'back'>('both');
+  const [mobileImageViewOpen, setMobileImageViewOpen] = useState(false);
+  const [frontPngDataUrl, setFrontPngDataUrl] = useState<string | null>(null);
+  const [backPngDataUrl, setBackPngDataUrl] = useState<string | null>(null);
+  const [isGeneratingMobileImages, setIsGeneratingMobileImages] = useState(false);
+  const [displayMode, setDisplayMode] = useState<'preview' | 'images'>('preview');
 
   const frontCardRef = useRef<HTMLDivElement>(null);
   const backCardRef = useRef<HTMLDivElement>(null);
+
+  // Generates high-res PNG data URLs for mobile view and long-press saving
+  const handleOpenMobileImageViewer = async () => {
+    if (!verifiedMember || !frontCardRef.current || !backCardRef.current) return;
+    setIsGeneratingMobileImages(true);
+    try {
+      let fData = frontPngDataUrl;
+      let bData = backPngDataUrl;
+      if (!fData) {
+        const fCanvas = await captureCardCanvas(frontCardRef.current);
+        fData = fCanvas.toDataURL('image/png', 1.0);
+        setFrontPngDataUrl(fData);
+      }
+      if (!bData) {
+        const bCanvas = await captureCardCanvas(backCardRef.current);
+        bData = bCanvas.toDataURL('image/png', 1.0);
+        setBackPngDataUrl(bData);
+      }
+      setMobileImageViewOpen(true);
+    } catch (err) {
+      console.error('Error preparing mobile images:', err);
+    } finally {
+      setIsGeneratingMobileImages(false);
+    }
+  };
 
   // Generate QR code when member is verified
   useEffect(() => {
@@ -382,6 +415,18 @@ export const DownloadIdCardPage: React.FC<DownloadIdCardPageProps> = ({ onBackTo
                     )}
                   </div>
 
+                  {/* Mobile Long-Press Image Saver */}
+                  <button
+                    type="button"
+                    onClick={handleOpenMobileImageViewer}
+                    disabled={isGeneratingMobileImages}
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer disabled:opacity-50"
+                    title="Save Front & Back Images to Phone Gallery"
+                  >
+                    <Smartphone className="w-4 h-4 text-emerald-200" />
+                    <span>{isGeneratingMobileImages ? 'Preparing Images...' : (isTamil ? '📱 மொபைல் சேமிப்பு' : '📱 Mobile Save')}</span>
+                  </button>
+
                   {/* Download PDF */}
                   <button
                     onClick={handleDownloadPdf}
@@ -520,6 +565,18 @@ export const DownloadIdCardPage: React.FC<DownloadIdCardPageProps> = ({ onBackTo
               </div>
 
             </div>
+
+            {/* Mobile Card Image Viewer Modal (Long-Press Save to Gallery) */}
+            {verifiedMember && (
+              <MobileCardImageViewerModal
+                isOpen={mobileImageViewOpen}
+                onClose={() => setMobileImageViewOpen(false)}
+                frontImageSrc={frontPngDataUrl}
+                backImageSrc={backPngDataUrl}
+                member={verifiedMember}
+                onDownloadPdf={handleDownloadPdf}
+              />
+            )}
 
           </div>
         )}

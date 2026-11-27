@@ -2,7 +2,8 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { Member } from '../types';
 import { CR80MembershipCard } from '../components/CR80MembershipCard';
-import { exportCardPdf, exportCardPng } from '../utils/idCardExport';
+import { MobileCardImageViewerModal } from '../components/MobileCardImageViewerModal';
+import { exportCardPdf, exportCardPng, printCardIsolated, captureCardCanvas } from '../utils/idCardExport';
 import { 
   CheckCircle, 
   Download, 
@@ -15,7 +16,8 @@ import {
   FileText,
   Image as ImageIcon,
   RotateCcw,
-  Info
+  Info,
+  Smartphone
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -35,10 +37,39 @@ export const RegistrationSuccessPage: React.FC<RegistrationSuccessPageProps> = (
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isExportingFrontPng, setIsExportingFrontPng] = useState(false);
   const [isExportingBackPng, setIsExportingBackPng] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [mobileImageViewOpen, setMobileImageViewOpen] = useState(false);
+  const [frontPngDataUrl, setFrontPngDataUrl] = useState<string | null>(null);
+  const [backPngDataUrl, setBackPngDataUrl] = useState<string | null>(null);
+  const [isGeneratingMobileImages, setIsGeneratingMobileImages] = useState(false);
 
   const frontRef = useRef<HTMLDivElement>(null);
   const backRef = useRef<HTMLDivElement>(null);
+
+  const handleOpenMobileViewer = async () => {
+    if (!frontRef.current || !backRef.current) return;
+    setIsGeneratingMobileImages(true);
+    try {
+      let fData = frontPngDataUrl;
+      let bData = backPngDataUrl;
+      if (!fData) {
+        const fCanvas = await captureCardCanvas(frontRef.current);
+        fData = fCanvas.toDataURL('image/png', 1.0);
+        setFrontPngDataUrl(fData);
+      }
+      if (!bData) {
+        const bCanvas = await captureCardCanvas(backRef.current);
+        bData = bCanvas.toDataURL('image/png', 1.0);
+        setBackPngDataUrl(bData);
+      }
+      setMobileImageViewOpen(true);
+    } catch (err) {
+      console.error('Error opening mobile viewer:', err);
+    } finally {
+      setIsGeneratingMobileImages(false);
+    }
+  };
 
   // Generate real, functional QR code linking to the verification endpoint
   useEffect(() => {
@@ -113,9 +144,22 @@ export const RegistrationSuccessPage: React.FC<RegistrationSuccessPageProps> = (
     }
   };
 
-  // 4. PRINT ID CARD (Print only the physical card sides)
-  const handlePrint = () => {
-    window.print();
+  // 4. PRINT ID CARD (Exact CR80 2-Page Duplex)
+  const handlePrint = async () => {
+    if (!frontRef.current) return;
+    setIsPrinting(true);
+    try {
+      await printCardIsolated(
+        frontRef.current,
+        backRef.current,
+        member,
+        { mode: activeSide, paperFormat: 'cr80' }
+      );
+    } catch (err) {
+      console.error('Print card error:', err);
+    } finally {
+      setIsPrinting(false);
+    }
   };
 
   return (
@@ -245,6 +289,21 @@ export const RegistrationSuccessPage: React.FC<RegistrationSuccessPageProps> = (
           {isTamil ? 'பதிவிறக்கம் & அச்சிடும் தேர்வுகள்' : 'Export & Print Options'}
         </h3>
 
+        {/* Mobile Long-Press Image Saver */}
+        <button
+          type="button"
+          onClick={handleOpenMobileViewer}
+          disabled={isGeneratingMobileImages}
+          className="w-full py-3 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+        >
+          <Smartphone className="w-5 h-5 text-emerald-200" />
+          <span>
+            {isGeneratingMobileImages 
+              ? 'Preparing Images...' 
+              : (isTamil ? '📱 மொபைலில் சேமிக்க (Long-Press Save)' : '📱 Save to Mobile Gallery (Long-Press)')}
+          </span>
+        </button>
+
         {/* Primary PDF Download (2-Page Front & Back CR80) */}
         <button
           onClick={handleDownloadPdf}
@@ -316,6 +375,16 @@ export const RegistrationSuccessPage: React.FC<RegistrationSuccessPageProps> = (
         </div>
 
       </div>
+
+      {/* Mobile Card Image Viewer Modal (Long-Press Save to Gallery) */}
+      <MobileCardImageViewerModal
+        isOpen={mobileImageViewOpen}
+        onClose={() => setMobileImageViewOpen(false)}
+        frontImageSrc={frontPngDataUrl}
+        backImageSrc={backPngDataUrl}
+        member={member}
+        onDownloadPdf={handleDownloadPdf}
+      />
 
     </div>
   );

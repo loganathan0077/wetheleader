@@ -199,7 +199,7 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
           </div>
 
           {/* Member Identity Body (Evenly Distributed, Generous Margins, Zero Clipping) */}
-          <div className="px-3.5 pt-1.5 pb-2 flex flex-col items-center flex-1 justify-between text-center">
+          <div className="px-3.5 pt-2 pb-3.5 flex flex-col items-center flex-1 justify-between text-center">
             
             {/* Photo Frame (Passport proportion 84 × 98 px) */}
             <div
@@ -239,28 +239,28 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
               )}
             </div>
 
-            {/* Status Pill (Clear font size, comfortable breathing room) */}
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-300 text-[#20223E] text-[7.5px] font-extrabold uppercase shadow-xs flex-shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#91BD32] flex-shrink-0" />
-              <span className="tracking-wide">ACTIVE MEMBER</span>
-              <span className="text-slate-400 font-normal">•</span>
-              <span className="font-tamil font-bold text-emerald-900">அதிகாரப்பூர்வ உறுப்பினர்</span>
+            {/* Status Pill (Vertically Centered Text, No Glyph Clipping) */}
+            <div className="inline-flex items-center justify-center gap-1.5 px-3 h-[22px] rounded-full bg-emerald-50 border border-emerald-300 text-[#20223E] text-[7.5px] font-extrabold uppercase shadow-xs flex-shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#91BD32] flex-shrink-0" style={{ backgroundColor: '#91BD32' }} />
+              <span className="tracking-wide leading-none flex items-center">ACTIVE MEMBER</span>
+              <span className="text-slate-400 font-normal leading-none flex items-center">•</span>
+              <span className="font-tamil font-bold text-emerald-900 leading-none flex items-center">அதிகாரப்பூர்வ உறுப்பினர்</span>
             </div>
 
             {/* Member Name Layout: Line 1 = Tamil Name (Bold, larger), Line 2 = English Name (Medium, directly below) */}
-            <div className="w-full flex flex-col items-center justify-center px-1 min-h-[28px] flex-shrink-0">
+            <div className="w-full flex flex-col items-center justify-center px-1 min-h-[30px] flex-shrink-0">
               {parsedName.tamilName && parsedName.englishName ? (
                 <>
                   {/* Line 1: Tamil Name */}
                   <div
-                    className={`${tamilFontSize} font-black text-[#20223E] font-tamil text-center leading-tight max-w-[280px] break-words`}
+                    className={`${tamilFontSize} font-black text-[#20223E] font-tamil text-center leading-normal max-w-[280px] break-words`}
                     title={parsedName.tamilName}
                   >
                     {parsedName.tamilName}
                   </div>
                   {/* Line 2: English Name directly below (Medium weight, NO parentheses) */}
                   <div
-                    className={`${englishFontSize} font-medium text-slate-700 text-center leading-tight max-w-[280px] break-words mt-0.5 tracking-wide`}
+                    className={`${englishFontSize} font-medium text-slate-700 text-center leading-normal max-w-[280px] break-words tracking-wide`}
                     title={parsedName.englishName}
                   >
                     {parsedName.englishName}
@@ -268,14 +268,14 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
                 </>
               ) : parsedName.tamilName ? (
                 <div
-                  className={`${tamilFontSize} font-black text-[#20223E] font-tamil text-center leading-tight max-w-[280px] break-words`}
+                  className={`${tamilFontSize} font-black text-[#20223E] font-tamil text-center leading-normal max-w-[280px] break-words`}
                   title={parsedName.tamilName}
                 >
                   {parsedName.tamilName}
                 </div>
               ) : (
                 <div
-                  className={`${singleFontSize} font-bold text-[#20223E] text-center leading-tight max-w-[280px] break-words`}
+                  className={`${singleFontSize} font-bold text-[#20223E] text-center leading-normal max-w-[280px] break-words`}
                   title={parsedName.singleName || member.full_name}
                 >
                   {parsedName.singleName || member.full_name}
@@ -283,18 +283,18 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
               )}
             </div>
 
-            {/* Membership Number Box */}
-            <div className="w-full bg-[#F5F7FA] border border-slate-200 rounded-lg py-1 px-2.5 text-center shadow-xs flex-shrink-0">
+            {/* Membership Number Box (Vertically Centered) */}
+            <div className="w-full bg-[#F5F7FA] border border-slate-200 rounded-lg py-1.5 px-2.5 flex flex-col items-center justify-center text-center shadow-xs flex-shrink-0 min-h-[38px]">
               <span className="text-[7px] font-extrabold text-slate-500 uppercase tracking-widest block font-tamil leading-tight">
                 MEMBERSHIP ID / உறுப்பினர் எண்
               </span>
-              <span className="text-[13px] font-black text-[#20223E] font-mono tracking-wider block mt-0.5 leading-tight">
+              <span className="text-[13px] font-black text-[#20223E] font-mono tracking-wider block mt-0.5 leading-none">
                 {member.membership_number}
               </span>
             </div>
 
             {/* Member Details Panel (Village, Ward, District, Date) - Unclipped Two-Column Layout */}
-            <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-left flex-shrink-0 shadow-xs">
+            <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2.5 text-left flex-shrink-0 shadow-xs">
               <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
                 {/* Village */}
                 <div className="flex flex-col justify-start">
@@ -343,12 +343,12 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
 
           </div>
 
-          {/* Bottom Footer: Center Website */}
+          {/* Bottom Footer: Center Website with Visible Bottom Padding */}
           <div
-            className="bg-[#20223E] text-white px-3 py-1 flex items-center justify-center text-[7.5px] font-extrabold border-t border-slate-200 flex-shrink-0"
-            style={{ backgroundColor: '#20223E' }}
+            className="bg-[#20223E] text-white px-3 h-[26px] flex items-center justify-center text-[8px] font-extrabold border-t border-slate-200 flex-shrink-0"
+            style={{ backgroundColor: '#20223E', height: '26px' }}
           >
-            <span className="text-center text-white font-extrabold tracking-wider lowercase">
+            <span className="text-center text-white font-extrabold tracking-wider lowercase leading-none">
               www.wetheleader.online
             </span>
           </div>
@@ -408,7 +408,7 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
         </div>
 
         {/* Back Content Area: Functional QR Code & Verification Data */}
-        <div className="px-3.5 pt-1.5 pb-2 flex flex-col items-center flex-1 justify-between text-center">
+        <div className="px-3.5 pt-2 pb-3.5 flex flex-col items-center flex-1 justify-between text-center">
           
           {/* Digital Verification Instructions */}
           <div className="space-y-0.5 flex-shrink-0">
@@ -422,25 +422,25 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
 
           {/* Functional QR Code Frame with White Quiet Zone */}
           <div
-            className="p-1.5 bg-white border-2 border-[#20223E] rounded-xl shadow-xs inline-block my-0.5 flex-shrink-0"
-            style={{ width: '110px', height: '110px', boxSizing: 'border-box', flexShrink: 0 }}
+            className="p-2 bg-white border-2 border-[#20223E] rounded-xl shadow-xs flex items-center justify-center my-0.5 flex-shrink-0"
+            style={{ width: '112px', height: '112px', boxSizing: 'border-box', flexShrink: 0 }}
           >
             {qrCodeUrl ? (
               <img
                 src={qrCodeUrl}
                 alt={`Verification QR Code for ${member.membership_number}`}
-                className="w-[98px] h-[98px] object-contain"
-                style={{ width: '98px', height: '98px', objectFit: 'contain' }}
+                className="w-[94px] h-[94px] object-contain"
+                style={{ width: '94px', height: '94px', objectFit: 'contain' }}
               />
             ) : (
-              <div className="w-[98px] h-[98px] bg-slate-100 flex items-center justify-center text-[8.5px] text-slate-400 font-medium">
+              <div className="w-[94px] h-[94px] bg-slate-100 flex items-center justify-center text-[8.5px] text-slate-400 font-medium">
                 Generating QR...
               </div>
             )}
           </div>
 
           {/* Membership ID Confirmation below QR - Vertically Centered & Unclipped */}
-          <div className="font-mono text-[11px] font-black text-[#20223E] tracking-wider bg-slate-100 px-4 py-1 rounded-md border border-slate-200 flex items-center justify-center min-h-[24px] flex-shrink-0 shadow-xs">
+          <div className="font-mono text-[11px] font-black text-[#20223E] tracking-wider bg-slate-100 px-4 h-[26px] rounded-md border border-slate-200 flex items-center justify-center flex-shrink-0 shadow-xs">
             <span className="leading-none">{member.membership_number}</span>
           </div>
 
@@ -455,20 +455,20 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
           </div>
 
           {/* Official Contact Info */}
-          <div className="text-[7.5px] text-slate-500 space-y-0.5 border-t border-slate-100 pt-1 w-full text-center flex-shrink-0">
-            <p className="font-extrabold text-[#20223E] tracking-wide">WE THE LEADER &bull; KINATHUKADAVU</p>
-            <p className="text-slate-600">Kinathukadavu, Coimbatore - 642109, Tamil Nadu, India</p>
-            <p className="text-[#2878B9] font-bold">www.wetheleader.org</p>
+          <div className="text-[7.5px] text-slate-500 space-y-0.5 border-t border-slate-100 pt-1.5 w-full text-center flex-shrink-0">
+            <p className="font-extrabold text-[#20223E] tracking-wide leading-tight">WE THE LEADER &bull; KINATHUKADAVU</p>
+            <p className="text-slate-600 leading-tight">Kinathukadavu, Coimbatore - 642109, Tamil Nadu, India</p>
+            <p className="text-[#2878B9] font-bold leading-tight">www.wetheleader.org</p>
           </div>
 
         </div>
 
         {/* Bottom Bar: Center Website matching Front */}
         <div
-          className="bg-[#20223E] text-white px-3 py-1 flex items-center justify-center text-[7.5px] font-extrabold border-t border-slate-200 flex-shrink-0"
-          style={{ backgroundColor: '#20223E' }}
+          className="bg-[#20223E] text-white px-3 h-[26px] flex items-center justify-center text-[8px] font-extrabold border-t border-slate-200 flex-shrink-0"
+          style={{ backgroundColor: '#20223E', height: '26px' }}
         >
-          <span className="text-center text-white font-extrabold tracking-wider lowercase">
+          <span className="text-center text-white font-extrabold tracking-wider lowercase leading-none">
             www.wetheleader.online
           </span>
         </div>
