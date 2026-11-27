@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { MemberFormData, Member } from '../types';
 import { memberService } from '../services/memberService';
+import { isSupabaseConfigured, uploadMemberPhoto } from '../lib/supabase';
 import { 
   User, 
   Phone, 
@@ -111,9 +112,13 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
     consent_given: true,
   });
 
+  const DRAFT_STORAGE_KEY = 'wtl_registration_form_draft';
+
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoStats, setPhotoStats] = useState<{
     originalSize: string;
@@ -122,6 +127,34 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
   } | null>(null);
   const [isCompressingPhoto, setIsCompressingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
+
+  // Preserve form draft across mobile app switches or memory reloads
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(DRAFT_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setFormData(prev => ({ ...prev, ...parsed, profile_photo_url: '' }));
+      }
+    } catch {}
+  }, []);
+
+  // Save non-sensitive draft on form change
+  const saveDraft = (data: MemberFormData) => {
+    try {
+      const { profile_photo_url, aadhaar_number, voter_id_number, ...safeDraft } = data;
+      sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(safeDraft));
+    } catch {}
+  };
+
+  // Clean up object URLs on unmount to prevent mobile memory leaks
+  useEffect(() => {
+    return () => {
+      if (photoPreview && photoPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(photoPreview);
+      }
+    };
+  }, [photoPreview]);
 
   // Validate form inputs
   const validateForm = (): boolean => {
@@ -163,7 +196,11 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
   };
 
   const handleInputChange = (field: keyof MemberFormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+      saveDraft(updated);
+      return updated;
+    });
     // Clear field-specific error when user modifies
     if (fieldErrors[field]) {
       setFieldErrors(prev => {
@@ -182,11 +219,13 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
       const newSkills = exists 
         ? prev.skills.filter(s => s !== skillId)
         : [...prev.skills, skillId];
-      return { ...prev, skills: newSkills };
+      const updated = { ...prev, skills: newSkills };
+      saveDraft(updated);
+      return updated;
     });
   };
 
-  // Automatic Client-Side Profile Photo Compression
+  // Memory-Safe Automatic Client-Side Profile Photo Compression
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -203,6 +242,11 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
     setIsCompressingPhoto(true);
 
     try {
+      // Clean up previous blob URL if exists
+      if (photoPreview && photoPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(photoPreview);
+      }
+
       // 2. Automatically compress photo to 20-50 KB range, max 600x600 px, keeping aspect ratio
       const result = await compressImageFile(file, {
         maxDimension: 600,
@@ -211,8 +255,9 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
         minQuality: 0.55, // Preserves face clarity on ID cards
       });
 
-      // 3. Save only the compressed image
-      setPhotoPreview(result.dataUrl);
+      // 3. Save compressed Blob for direct storage upload & zero-copy preview
+      setPhotoBlob(result.blob);
+      setPhotoPreview(result.previewUrl);
       setFormData(prev => ({ ...prev, profile_photo_url: result.dataUrl }));
       setPhotoStats({
         originalSize: formatFileSize(result.originalSizeKB),
@@ -230,6 +275,10 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
   };
 
   const removePhoto = () => {
+    if (photoPreview && photoPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(photoPreview);
+    }
+    setPhotoBlob(null);
     setPhotoPreview(null);
     setPhotoStats(null);
     setPhotoError(null);
@@ -248,7 +297,37 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
     setIsSubmitting(true);
 
     try {
-      const newMember = await memberService.registerMember(formData, language);
+      let finalSubmissionData = { ...formData };
+
+      // Upload photo blob directly to Supabase storage before submitting record
+      if (photoBlob && isSupabaseConfigured) {
+        setIsUploadingPhoto(true);
+        const uploadRes = await uploadMemberPhoto(photoBlob, `member_${Date.now()}.jpg`);
+        setIsUploadingPhoto(false);
+
+        if (uploadRes.error) {
+          console.error('Photo storage upload error:', uploadRes.error);
+          setErrorMessage(
+            language === 'ta'
+              ? `புகைப்படம் பதிவேற்றுவதில் பிழை: ${uploadRes.error}. உங்கள் படிவத் தகவல்கள் அனைத்தும் பாதுகாப்பாக உள்ளன. மீண்டும் 'பதிவு செய்க' என்பதை அழுத்தவும்.`
+              : `Photo upload failed: ${uploadRes.error}. Your entered information is preserved. Please click Submit again to retry.`
+          );
+          setIsSubmitting(false);
+          return;
+        }
+
+        if (uploadRes.path) {
+          finalSubmissionData.profile_photo_url = uploadRes.path;
+        }
+      }
+
+      const newMember = await memberService.registerMember(finalSubmissionData, language);
+
+      // Clear draft on successful submission
+      try {
+        sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+      } catch {}
+
       onSuccess(newMember);
     } catch (err: any) {
       console.error('Registration submission error:', err);
@@ -264,6 +343,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
       }
     } finally {
       setIsSubmitting(false);
+      setIsUploadingPhoto(false);
     }
   };
 
@@ -466,9 +546,8 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                     <input
                       type="file"
                       accept="image/*"
-                      capture="user"
                       onChange={handlePhotoUpload}
-                      disabled={isCompressingPhoto}
+                      disabled={isCompressingPhoto || isUploadingPhoto || isSubmitting}
                       className="hidden"
                     />
                   </label>
@@ -934,13 +1013,23 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
         <div className="pt-2">
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isCompressingPhoto || isUploadingPhoto}
             className="w-full py-4 rounded-xl bg-[#91BD32] hover:bg-[#80a82b] disabled:bg-slate-300 text-[#20223E] font-black text-lg tracking-wide shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-3 cursor-pointer disabled:cursor-not-allowed"
           >
-            {isSubmitting ? (
+            {isUploadingPhoto ? (
+              <>
+                <div className="w-6 h-6 border-3 border-[#20223E] border-t-transparent rounded-full animate-spin" />
+                <span>{t('photoUploading')}</span>
+              </>
+            ) : isSubmitting ? (
               <>
                 <div className="w-6 h-6 border-3 border-[#20223E] border-t-transparent rounded-full animate-spin" />
                 <span>{t('submittingBtn')}</span>
+              </>
+            ) : isCompressingPhoto ? (
+              <>
+                <div className="w-6 h-6 border-3 border-[#20223E] border-t-transparent rounded-full animate-spin" />
+                <span>{t('photoCompressing')}</span>
               </>
             ) : (
               <>

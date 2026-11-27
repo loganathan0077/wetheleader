@@ -77,15 +77,15 @@ export const AppContent: React.FC = () => {
       });
     }
     const action = params.get('action');
-    if (action === 'download-id') {
+    if (action === 'download-id' || window.location.hash === '#download-id') {
       setCurrentView('download-id');
     }
     const view = params.get('view');
-    if (view === 'about') {
+    if (view === 'about' || window.location.hash === '#about-us' || window.location.hash === '#about') {
       setCurrentView('about');
     }
-    if (window.location.hash === '#about-us') {
-      setCurrentView('about');
+    if (window.location.hash === '#register' || params.get('view') === 'register') {
+      setCurrentView('register');
     }
   }, []);
 
@@ -181,10 +181,12 @@ export const AppContent: React.FC = () => {
         {currentView === 'home' && (
           <HomePage 
             onRegisterClick={() => {
+              window.location.hash = '#register';
               setCurrentView('register');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             onDownloadIdClick={() => {
+              window.location.hash = '#download-id';
               setCurrentView('download-id');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
@@ -194,6 +196,7 @@ export const AppContent: React.FC = () => {
         {currentView === 'download-id' && (
           <DownloadIdCardPage 
             onBackToHome={() => {
+              window.location.hash = '';
               setCurrentView('home');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
@@ -203,10 +206,12 @@ export const AppContent: React.FC = () => {
         {currentView === 'about' && (
           <AboutUsPage 
             onBackToHome={() => {
+              window.location.hash = '';
               setCurrentView('home');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             onRegisterClick={() => {
+              window.location.hash = '#register';
               setCurrentView('register');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
@@ -216,7 +221,10 @@ export const AppContent: React.FC = () => {
         {currentView === 'register' && (
           <RegistrationPage 
             onSuccess={handleRegistrationSuccess}
-            onCancel={() => setCurrentView('home')}
+            onCancel={() => {
+              window.location.hash = '';
+              setCurrentView('home');
+            }}
           />
         )}
 

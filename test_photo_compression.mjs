@@ -43,7 +43,7 @@ console.log('✓ PASS: RegistrationPage automatically compresses uploaded photos
 
 // Test 4: Mobile camera & gallery capture
 assert(regPageContent.includes('accept="image/*"'), 'Accepts all standard mobile image formats');
-assert(regPageContent.includes('capture="user"'), 'Supports direct mobile front/user camera capture');
+assert(!regPageContent.includes('capture="user"'), 'Supports both camera and gallery by omitting restrictive capture attribute');
 
 console.log('✓ PASS: Mobile camera and gallery photo uploads supported.');
 

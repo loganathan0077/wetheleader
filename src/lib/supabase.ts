@@ -28,7 +28,7 @@ export async function uploadMemberPhoto(
       .from('member-photos')
       .upload(safeName, fileOrBlob, {
         contentType: 'image/jpeg',
-        upsert: true
+        upsert: false
       });
 
     if (error) {
