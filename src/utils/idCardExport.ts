@@ -72,20 +72,21 @@ export async function captureCardCanvas(
   let target = element;
   let cleanupClone: (() => void) | null = null;
 
-  // Handle hidden elements (e.g. mobile tabs where one side has display: none or zero width)
-  const isHidden = !element.offsetWidth || !element.offsetHeight || 
-    (typeof window !== 'undefined' && window.getComputedStyle(element).display === 'none');
-
-  if (isHidden && typeof document !== 'undefined') {
+  // Always use a clean isolated clone to prevent parent modal/scroll/transform interference
+  if (typeof document !== 'undefined') {
     const clone = element.cloneNode(true) as HTMLElement;
     clone.style.position = 'fixed';
     clone.style.left = '-9999px';
     clone.style.top = '0';
     clone.style.width = `${CR80_WIDTH_PX}px`;
     clone.style.height = `${CR80_HEIGHT_PX}px`;
+    clone.style.boxSizing = 'border-box';
+    clone.style.margin = '0';
+    clone.style.padding = '0';
     clone.style.display = 'flex';
     clone.style.flexDirection = 'column';
     clone.style.visibility = 'visible';
+    clone.style.transform = 'none';
     clone.style.zIndex = '-9999';
     document.body.appendChild(clone);
     target = clone;
@@ -99,9 +100,8 @@ export async function captureCardCanvas(
   try {
     await prepareElementForCapture(target);
 
-    const sourceWidth = target.offsetWidth || CR80_WIDTH_PX;
-    // Scale factor to reach targetWidth from source CSS width (~3.195x)
-    const scale = targetWidth / sourceWidth;
+    // Exact scale factor to reach 1016px from 318px CSS width (~3.194968x)
+    const scale = targetWidth / CR80_WIDTH_PX;
 
     const rawCanvas = await html2canvas(target, {
       scale: scale,
@@ -110,8 +110,9 @@ export async function captureCardCanvas(
       backgroundColor: '#FFFFFF',
       logging: false,
       imageTimeout: 15000,
-      width: CR80_WIDTH_PX,
-      height: CR80_HEIGHT_PX
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: 1200
     });
 
     // Normalize to exact targetWidth × targetHeight (1016 × 1612) with high quality smoothing

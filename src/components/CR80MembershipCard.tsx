@@ -158,7 +158,7 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
           }}
         >
           {/* Card Header in Navy Blue with micro green accent */}
-          <div className="bg-[#20223E] text-white p-3 pb-2.5 relative border-b-[3px] border-[#91BD32] flex-shrink-0">
+          <div className="bg-[#20223E] text-white px-3 py-2 relative border-b-[3px] border-[#91BD32] flex-shrink-0">
             <div className="flex items-center justify-between">
               
               {/* Logo in clean white container */}
@@ -166,7 +166,7 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
                 <img
                   src="/logo.svg"
                   alt="WE the Leader"
-                  className="h-7 w-auto object-contain max-w-[80px]"
+                  className="h-6.5 w-auto object-contain max-w-[76px]"
                   onError={(e) => {
                     const target = e.currentTarget;
                     if (!target.src.includes('we-the-leader-logo.jpg')) {
@@ -178,13 +178,13 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
 
               {/* Header Title & Tagline */}
               <div className="text-right flex-1 pl-2">
-                <div className="text-[12px] font-black tracking-tight leading-tight text-white uppercase">
+                <div className="text-[11.5px] font-black tracking-tight leading-tight text-white uppercase">
                   WE THE LEADER
                 </div>
-                <div className="text-[8px] font-black text-[#91BD32] tracking-wider uppercase mt-0.5">
+                <div className="text-[7.5px] font-black text-[#91BD32] tracking-wider uppercase mt-0.5">
                   LEAD THE CHANGE
                 </div>
-                <div className="text-[7px] text-slate-300 font-bold uppercase tracking-wider flex items-center justify-end gap-0.5 mt-0.5">
+                <div className="text-[6.5px] text-slate-300 font-bold uppercase tracking-wider flex items-center justify-end gap-0.5 mt-0.5">
                   <MapPin className="w-2.5 h-2.5 text-[#E98A32]" />
                   <span>KINATHUKADAVU | COIMBATORE</span>
                 </div>
@@ -193,11 +193,11 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
             </div>
           </div>
 
-          {/* Member Identity Body (Evenly Distributed, Safe Inside CR80 Area) */}
-          <div className="px-4 py-2.5 flex flex-col items-center flex-1 justify-between text-center overflow-hidden">
+          {/* Member Identity Body (Evenly Distributed, Generous Margins, Zero Clipping) */}
+          <div className="px-3.5 pt-1.5 pb-2 flex flex-col items-center flex-1 justify-between text-center">
             
-            {/* Photo Frame (Passport proportion 86 × 102 px) */}
-            <div className="w-[86px] h-[102px] rounded-xl border-[2.5px] border-[#91BD32] p-0.5 bg-white shadow-sm overflow-hidden relative flex items-center justify-center flex-shrink-0">
+            {/* Photo Frame (Passport proportion 84 × 98 px) */}
+            <div className="w-[84px] h-[98px] rounded-xl border-[2.5px] border-[#91BD32] p-0.5 bg-white shadow-xs overflow-hidden relative flex items-center justify-center flex-shrink-0">
               {photoUrl && !photoError ? (
                 <img
                   src={photoUrl}
@@ -212,7 +212,7 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
                   <img
                     src="/logo.svg"
                     alt="WE the Leader Official"
-                    className="w-12 h-auto object-contain max-h-[46px] mb-1"
+                    className="w-11 h-auto object-contain max-h-[44px] mb-1"
                     onError={(e) => {
                       const target = e.currentTarget;
                       if (!target.src.includes('we-the-leader-logo.jpg')) {
@@ -230,7 +230,7 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
               )}
             </div>
 
-            {/* Status Pill (Clear font size, no cramped/overlapping characters) */}
+            {/* Status Pill (Clear font size, comfortable breathing room) */}
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-300 text-[#20223E] text-[7.5px] font-extrabold uppercase shadow-xs flex-shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-[#91BD32] flex-shrink-0" />
               <span className="tracking-wide">ACTIVE MEMBER</span>
@@ -238,20 +238,20 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
               <span className="font-tamil font-bold text-emerald-900">அதிகாரப்பூர்வ உறுப்பினர்</span>
             </div>
 
-            {/* Member Name Layout: Line 1 = Tamil Name (Bold, larger), Line 2 = English Name (Medium, directly below, NO parentheses) */}
-            <div className="w-full flex flex-col items-center justify-center my-0.5 px-1 min-h-[32px]">
+            {/* Member Name Layout: Line 1 = Tamil Name (Bold, larger), Line 2 = English Name (Medium, directly below) */}
+            <div className="w-full flex flex-col items-center justify-center px-1 min-h-[28px] flex-shrink-0">
               {parsedName.tamilName && parsedName.englishName ? (
                 <>
                   {/* Line 1: Tamil Name */}
                   <div
-                    className={`${tamilFontSize} font-black text-[#20223E] font-tamil text-center leading-[1.25] max-w-[280px] break-words`}
+                    className={`${tamilFontSize} font-black text-[#20223E] font-tamil text-center leading-tight max-w-[280px] break-words`}
                     title={parsedName.tamilName}
                   >
                     {parsedName.tamilName}
                   </div>
                   {/* Line 2: English Name directly below (Medium weight, NO parentheses) */}
                   <div
-                    className={`${englishFontSize} font-medium text-slate-700 text-center leading-[1.2] max-w-[280px] break-words mt-0.5 tracking-wide`}
+                    className={`${englishFontSize} font-medium text-slate-700 text-center leading-tight max-w-[280px] break-words mt-0.5 tracking-wide`}
                     title={parsedName.englishName}
                   >
                     {parsedName.englishName}
@@ -259,14 +259,14 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
                 </>
               ) : parsedName.tamilName ? (
                 <div
-                  className={`${tamilFontSize} font-black text-[#20223E] font-tamil text-center leading-[1.25] max-w-[280px] break-words`}
+                  className={`${tamilFontSize} font-black text-[#20223E] font-tamil text-center leading-tight max-w-[280px] break-words`}
                   title={parsedName.tamilName}
                 >
                   {parsedName.tamilName}
                 </div>
               ) : (
                 <div
-                  className={`${singleFontSize} font-bold text-[#20223E] text-center leading-[1.25] max-w-[280px] break-words`}
+                  className={`${singleFontSize} font-bold text-[#20223E] text-center leading-tight max-w-[280px] break-words`}
                   title={parsedName.singleName || member.full_name}
                 >
                   {parsedName.singleName || member.full_name}
@@ -276,57 +276,66 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
 
             {/* Membership Number Box */}
             <div className="w-full bg-[#F5F7FA] border border-slate-200 rounded-lg py-1 px-2.5 text-center shadow-xs flex-shrink-0">
-              <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest block font-tamil">
+              <span className="text-[7px] font-extrabold text-slate-500 uppercase tracking-widest block font-tamil leading-tight">
                 MEMBERSHIP ID / உறுப்பினர் எண்
               </span>
-              <span className="text-[13.5px] font-black text-[#20223E] font-mono tracking-wider block mt-0.5">
+              <span className="text-[13px] font-black text-[#20223E] font-mono tracking-wider block mt-0.5 leading-tight">
                 {member.membership_number}
               </span>
             </div>
 
-            {/* Member Details Grid (Village, Ward, District, Date) */}
-            <div className="w-full grid grid-cols-2 gap-1.5 text-left bg-slate-50 p-2 rounded-lg border border-slate-200 flex-shrink-0">
-              <div className="overflow-hidden">
-                <span className="text-[7px] font-bold text-slate-500 uppercase block font-tamil truncate">
-                  VILLAGE / கிராமம்
-                </span>
-                <span
-                  className="font-bold text-[#20223E] text-[8.5px] block truncate"
-                  title={member.village_name || 'Kinathukadavu'}
-                >
-                  {member.village_name || 'Kinathukadavu'}
-                </span>
-              </div>
-              <div className="overflow-hidden">
-                <span className="text-[7px] font-bold text-slate-500 uppercase block font-tamil truncate">
-                  WARD / வார்டு
-                </span>
-                <span className="font-bold text-[#20223E] text-[8.5px] block truncate">
-                  {member.ward_number ? `Ward ${member.ward_number}` : '-'}
-                </span>
-              </div>
-              <div className="overflow-hidden">
-                <span className="text-[7px] font-bold text-slate-500 uppercase block font-tamil truncate">
-                  DISTRICT / மாவட்டம்
-                </span>
-                <span className="font-bold text-[#20223E] text-[8.5px] block truncate">
-                  {member.district || 'Coimbatore'}
-                </span>
-              </div>
-              <div className="overflow-hidden">
-                <span className="text-[7px] font-bold text-slate-500 uppercase block font-tamil truncate">
-                  ISSUED / பதிவு தேதி
-                </span>
-                <span className="font-bold text-[#20223E] text-[8.5px] block truncate">
-                  {formattedDate}
-                </span>
+            {/* Member Details Panel (Village, Ward, District, Date) - Unclipped Two-Column Layout */}
+            <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-left flex-shrink-0 shadow-xs">
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                {/* Village */}
+                <div className="flex flex-col justify-start">
+                  <span className="text-[7.5px] font-extrabold text-slate-500 uppercase block font-tamil leading-tight tracking-tight">
+                    VILLAGE / கிராமம்
+                  </span>
+                  <span
+                    className="font-black text-[#20223E] text-[9.5px] block leading-tight tracking-tight mt-0.5"
+                    title={member.village_name || 'Kinathukadavu'}
+                  >
+                    {member.village_name || 'Kinathukadavu'}
+                  </span>
+                </div>
+
+                {/* Ward */}
+                <div className="flex flex-col justify-start">
+                  <span className="text-[7.5px] font-extrabold text-slate-500 uppercase block font-tamil leading-tight tracking-tight">
+                    WARD / வார்டு
+                  </span>
+                  <span className="font-black text-[#20223E] text-[9.5px] block leading-tight tracking-tight mt-0.5">
+                    {member.ward_number ? `Ward ${member.ward_number}` : '-'}
+                  </span>
+                </div>
+
+                {/* District */}
+                <div className="flex flex-col justify-start">
+                  <span className="text-[7.5px] font-extrabold text-slate-500 uppercase block font-tamil leading-tight tracking-tight">
+                    DISTRICT / மாவட்டம்
+                  </span>
+                  <span className="font-black text-[#20223E] text-[9.5px] block leading-tight tracking-tight mt-0.5">
+                    {member.district || 'Coimbatore'}
+                  </span>
+                </div>
+
+                {/* Issued Date */}
+                <div className="flex flex-col justify-start">
+                  <span className="text-[7.5px] font-extrabold text-slate-500 uppercase block font-tamil leading-tight tracking-tight">
+                    ISSUED / பதிவு தேதி
+                  </span>
+                  <span className="font-black text-[#20223E] text-[9.5px] block leading-tight tracking-tight mt-0.5">
+                    {formattedDate}
+                  </span>
+                </div>
               </div>
             </div>
 
           </div>
 
           {/* Bottom Footer: Center Website */}
-          <div className="bg-[#20223E] text-white px-3 py-1.5 flex items-center justify-center text-[7px] font-bold border-t border-slate-200 flex-shrink-0">
+          <div className="bg-[#20223E] text-white px-3 py-1 flex items-center justify-center text-[7.5px] font-extrabold border-t border-slate-200 flex-shrink-0">
             <span className="text-center text-white font-extrabold tracking-wider lowercase">
               www.wetheleader.online
             </span>
@@ -352,13 +361,13 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
         }}
       >
         {/* Back Card Header in Navy Blue with micro green accent */}
-        <div className="bg-[#20223E] text-white p-3 pb-2.5 relative border-b-[3px] border-[#91BD32] flex-shrink-0">
+        <div className="bg-[#20223E] text-white px-3 py-2 relative border-b-[3px] border-[#91BD32] flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="bg-white p-1 rounded-lg shadow-xs flex-shrink-0">
               <img
                 src="/logo.svg"
                 alt="WE the Leader"
-                className="h-7 w-auto object-contain max-w-[80px]"
+                className="h-6.5 w-auto object-contain max-w-[76px]"
                 onError={(e) => {
                   const target = e.currentTarget;
                   if (!target.src.includes('we-the-leader-logo.jpg')) {
@@ -368,13 +377,13 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
               />
             </div>
             <div className="text-right flex-1 pl-2">
-              <div className="text-[12px] font-black tracking-tight leading-tight text-white uppercase">
+              <div className="text-[11.5px] font-black tracking-tight leading-tight text-white uppercase">
                 WE THE LEADER
               </div>
-              <div className="text-[8px] font-black text-[#91BD32] tracking-wider uppercase mt-0.5">
+              <div className="text-[7.5px] font-black text-[#91BD32] tracking-wider uppercase mt-0.5">
                 LEAD THE CHANGE
               </div>
-              <div className="text-[7px] text-slate-300 font-bold uppercase tracking-wider">
+              <div className="text-[6.5px] text-slate-300 font-bold uppercase tracking-wider">
                 MEMBERSHIP VERIFICATION
               </div>
             </div>
@@ -382,11 +391,11 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
         </div>
 
         {/* Back Content Area: Functional QR Code & Verification Data */}
-        <div className="px-4 py-2.5 flex flex-col items-center flex-1 justify-between text-center overflow-hidden">
+        <div className="px-3.5 pt-1.5 pb-2 flex flex-col items-center flex-1 justify-between text-center">
           
           {/* Digital Verification Instructions */}
           <div className="space-y-0.5 flex-shrink-0">
-            <span className="text-[8.5px] font-black text-[#20223E] tracking-wider uppercase block">
+            <span className="text-[8.5px] font-black text-[#20223E] tracking-wider uppercase block leading-tight">
               OFFICIAL DIGITAL VERIFICATION
             </span>
             <span className="text-[7.5px] font-medium text-slate-500 block font-tamil leading-tight">
@@ -395,31 +404,31 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
           </div>
 
           {/* Functional QR Code Frame with White Quiet Zone */}
-          <div className="p-2 bg-white border-2 border-[#20223E] rounded-xl shadow-xs inline-block my-0.5 flex-shrink-0">
+          <div className="p-1.5 bg-white border-2 border-[#20223E] rounded-xl shadow-xs inline-block my-0.5 flex-shrink-0">
             {qrCodeUrl ? (
               <img
                 src={qrCodeUrl}
                 alt={`Verification QR Code for ${member.membership_number}`}
-                className="w-[106px] h-[106px] object-contain"
+                className="w-[98px] h-[98px] object-contain"
               />
             ) : (
-              <div className="w-[106px] h-[106px] bg-slate-100 flex items-center justify-center text-[8.5px] text-slate-400 font-medium">
+              <div className="w-[98px] h-[98px] bg-slate-100 flex items-center justify-center text-[8.5px] text-slate-400 font-medium">
                 Generating QR...
               </div>
             )}
           </div>
 
-          {/* Membership ID Confirmation below QR */}
-          <div className="font-mono text-[10.5px] font-black text-[#20223E] tracking-wider bg-slate-100 px-3 py-0.5 rounded-md border border-slate-200 flex-shrink-0">
-            {member.membership_number}
+          {/* Membership ID Confirmation below QR - Vertically Centered & Unclipped */}
+          <div className="font-mono text-[11px] font-black text-[#20223E] tracking-wider bg-slate-100 px-4 py-1 rounded-md border border-slate-200 flex items-center justify-center min-h-[24px] flex-shrink-0 shadow-xs">
+            <span className="leading-none">{member.membership_number}</span>
           </div>
 
-          {/* Official Terms & Notice (Proper Tamil Line-height & Non-overlapping glyphs) */}
+          {/* Official Terms & Notice */}
           <div className="bg-[#F5F7FA] border border-slate-200 rounded-lg p-2 text-left w-full space-y-1 flex-shrink-0">
             <p className="text-[7.5px] text-slate-600 leading-normal">
               &bull; This card confirms active registered membership in <strong className="text-[#20223E]">WE the Leader</strong>, Kinathukadavu. It is non-transferable.
             </p>
-            <p className="text-[7.5px] text-slate-600 leading-relaxed font-tamil">
+            <p className="text-[7.5px] text-slate-600 leading-normal font-tamil">
               &bull; இவ்வட்டை <strong className="text-[#20223E]">WE the Leader</strong> அமைப்பின் அதிகாரப்பூர்வ உறுப்பினர் சான்றாகும். மற்றவருக்கு மாற்றத்தக்கதல்ல.
             </p>
           </div>
@@ -434,7 +443,7 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
         </div>
 
         {/* Bottom Bar: Center Website matching Front */}
-        <div className="bg-[#20223E] text-white px-3 py-1.5 flex items-center justify-center text-[7px] font-bold border-t border-slate-200 flex-shrink-0">
+        <div className="bg-[#20223E] text-white px-3 py-1 flex items-center justify-center text-[7.5px] font-extrabold border-t border-slate-200 flex-shrink-0">
           <span className="text-center text-white font-extrabold tracking-wider lowercase">
             www.wetheleader.online
           </span>
