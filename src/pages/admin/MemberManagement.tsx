@@ -29,6 +29,7 @@ import {
   CreditCard,
   Sparkles,
   Download,
+  Upload,
   Info,
   Camera,
   Loader2,
@@ -1246,17 +1247,17 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ selectedMemb
                     ) : formData.profile_photo_url ? (
                       <img src={formData.profile_photo_url} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
-                      <Camera className="w-6 h-6 text-slate-400" />
+                      <User className="w-6 h-6 text-slate-400" />
                     )}
                   </div>
                   <div className="flex-1 space-y-1.5">
                     <div className="flex items-center gap-2">
                       <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold cursor-pointer transition-colors shadow-xs">
-                        <Camera className="w-3.5 h-3.5 text-[#2878B9]" />
+                        <Upload className="w-3.5 h-3.5 text-[#2878B9]" />
                         <span>{formData.profile_photo_url ? (isTamil ? 'மாற்று' : 'Change') : t('photoUploadBtn')}</span>
                         <input
                           type="file"
-                          accept="image/*"
+                          accept="image/jpeg,image/png,image/webp,image/jpg"
                           onChange={handleAdminPhotoUpload}
                           disabled={photoCompressing}
                           className="hidden"

@@ -9,7 +9,6 @@ import {
   Calendar, 
   MapPin, 
   Briefcase, 
-  Camera, 
   Upload,
   CheckCircle2, 
   AlertCircle, 
@@ -129,9 +128,8 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
   const [isCompressingPhoto, setIsCompressingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
 
-  // Hidden file inputs for direct camera capture and device gallery picker
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const galleryInputRef = useRef<HTMLInputElement>(null);
+  // Hidden file input for device gallery/files picker
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Preserve form draft across mobile app switches or memory reloads
   useEffect(() => {
@@ -541,57 +539,39 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
                 ) : photoPreview ? (
                   <img src={photoPreview} alt="Profile Preview" className="w-full h-full object-cover" />
                 ) : (
-                  <Camera className="w-8 h-8 text-slate-400" />
+                  <User className="w-8 h-8 text-slate-400" />
                 )}
               </div>
               <div className="flex-1 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  {/* Option A: Take Photo directly via mobile camera */}
+                  {/* Single Upload Photo Button (Device Gallery / Files) */}
                   <button
                     type="button"
-                    onClick={() => cameraInputRef.current?.click()}
+                    onClick={() => fileInputRef.current?.click()}
                     disabled={isCompressingPhoto || isUploadingPhoto || isSubmitting}
-                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                    className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
                       isCompressingPhoto 
                         ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                        : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white'
+                        : 'bg-[#20223E] hover:bg-[#2878B9] active:bg-[#1a1b32] text-white'
                     }`}
                   >
                     {isCompressingPhoto ? (
                       <Loader2 className="w-4 h-4 text-white animate-spin" />
                     ) : (
-                      <Camera className="w-4 h-4 text-white" />
+                      <Upload className="w-4 h-4 text-[#91BD32]" />
                     )}
-                    <span>{t('photoTakePhotoBtn')}</span>
+                    <span>
+                      {isCompressingPhoto 
+                        ? t('photoCompressing') 
+                        : photoPreview 
+                          ? (language === 'ta' ? 'மாற்று' : 'Change Photo') 
+                          : t('photoUploadBtn')}
+                    </span>
                   </button>
 
-                  {/* Option B: Upload from Device gallery / files */}
-                  <button
-                    type="button"
-                    onClick={() => galleryInputRef.current?.click()}
-                    disabled={isCompressingPhoto || isUploadingPhoto || isSubmitting}
-                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
-                      isCompressingPhoto 
-                        ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                        : 'bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-[#20223E] border border-slate-300'
-                    }`}
-                  >
-                    <Upload className="w-4 h-4 text-[#2878B9]" />
-                    <span>{t('photoUploadDeviceBtn')}</span>
-                  </button>
-
-                  {/* Hidden Inputs for Direct Camera & Gallery/Device Picker */}
+                  {/* Device File Input (Gallery on mobile, file picker on desktop) */}
                   <input
-                    ref={cameraInputRef}
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    onChange={handlePhotoUpload}
-                    disabled={isCompressingPhoto || isUploadingPhoto || isSubmitting}
-                    className="hidden"
-                  />
-                  <input
-                    ref={galleryInputRef}
+                    ref={fileInputRef}
                     type="file"
                     accept="image/*"
                     onChange={handlePhotoUpload}

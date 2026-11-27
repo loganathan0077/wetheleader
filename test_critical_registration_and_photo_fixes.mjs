@@ -61,16 +61,21 @@ assert(
 );
 
 assert(
-  regFile.includes('cameraInputRef = useRef<HTMLInputElement>(null);') &&
-  regFile.includes('galleryInputRef = useRef<HTMLInputElement>(null);'),
-  'RegistrationPage has dual refs for camera and device gallery'
+  regFile.includes('fileInputRef = useRef<HTMLInputElement>(null);'),
+  'RegistrationPage has single ref for device image selection'
 );
 
 assert(
-  regFile.includes('capture="environment"') &&
-  regFile.includes("t('photoTakePhotoBtn')") &&
-  regFile.includes("t('photoUploadDeviceBtn')"),
-  'RegistrationPage has direct mobile camera button with capture="environment" and device upload button'
+  !regFile.includes('capture="environment"') &&
+  !regFile.includes('photoTakePhotoBtn') &&
+  !regFile.includes('Camera'),
+  'RegistrationPage completely removes Camera capture, camera icons and capture attributes'
+);
+
+assert(
+  regFile.includes("t('photoUploadBtn')") &&
+  regFile.includes('accept="image/*"'),
+  'RegistrationPage displays single Upload Photo button supporting JPG, JPEG, PNG, and WebP from device'
 );
 
 assert(
