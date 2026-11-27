@@ -323,6 +323,10 @@ ALTER TABLE public.website_settings ADD COLUMN IF NOT EXISTS contact_number TEXT
 ALTER TABLE public.website_settings ADD COLUMN IF NOT EXISTS social_media_links JSONB DEFAULT '[]'::jsonb;
 ALTER TABLE public.website_settings ADD COLUMN IF NOT EXISTS menu_settings JSONB DEFAULT '{"membership": true, "contact": true, "about": true}'::jsonb;
 
+-- Table Grants for website_settings
+GRANT SELECT ON TABLE public.website_settings TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON TABLE public.website_settings TO authenticated;
+
 ALTER TABLE public.website_settings ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Public read website_settings" ON public.website_settings;
@@ -332,11 +336,26 @@ TO anon, authenticated
 USING (true);
 
 DROP POLICY IF EXISTS "Admins write website_settings" ON public.website_settings;
-CREATE POLICY "Admins write website_settings"
-ON public.website_settings FOR ALL
+DROP POLICY IF EXISTS "Admins manage website_settings" ON public.website_settings;
+DROP POLICY IF EXISTS "Admins insert website_settings" ON public.website_settings;
+DROP POLICY IF EXISTS "Admins update website_settings" ON public.website_settings;
+DROP POLICY IF EXISTS "Admins delete website_settings" ON public.website_settings;
+
+CREATE POLICY "Admins insert website_settings"
+ON public.website_settings FOR INSERT
+TO authenticated
+WITH CHECK (public.is_admin());
+
+CREATE POLICY "Admins update website_settings"
+ON public.website_settings FOR UPDATE
 TO authenticated
 USING (public.is_admin())
 WITH CHECK (public.is_admin());
+
+CREATE POLICY "Admins delete website_settings"
+ON public.website_settings FOR DELETE
+TO authenticated
+USING (public.is_admin());
 
 -- 8. Storage Buckets (member-photos, activity-images, organisation-assets)
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)

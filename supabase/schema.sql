@@ -365,6 +365,10 @@ BEFORE INSERT OR UPDATE ON public.website_settings
 FOR EACH ROW
 EXECUTE FUNCTION public.trg_sync_website_settings();
 
+-- Table Grants for website_settings
+GRANT SELECT ON TABLE public.website_settings TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON TABLE public.website_settings TO authenticated;
+
 -- Enable RLS on website_settings
 ALTER TABLE public.website_settings ENABLE ROW LEVEL SECURITY;
 
@@ -375,13 +379,28 @@ ON public.website_settings FOR SELECT
 TO anon, authenticated
 USING (true);
 
--- Only verified administrators can modify website settings
+-- Only verified administrators can insert, update, delete website settings
 DROP POLICY IF EXISTS "Admins manage website_settings" ON public.website_settings;
-CREATE POLICY "Admins manage website_settings"
-ON public.website_settings FOR ALL
+DROP POLICY IF EXISTS "Admins write website_settings" ON public.website_settings;
+DROP POLICY IF EXISTS "Admins insert website_settings" ON public.website_settings;
+DROP POLICY IF EXISTS "Admins update website_settings" ON public.website_settings;
+DROP POLICY IF EXISTS "Admins delete website_settings" ON public.website_settings;
+
+CREATE POLICY "Admins insert website_settings"
+ON public.website_settings FOR INSERT
+TO authenticated
+WITH CHECK (public.is_admin());
+
+CREATE POLICY "Admins update website_settings"
+ON public.website_settings FOR UPDATE
 TO authenticated
 USING (public.is_admin())
 WITH CHECK (public.is_admin());
+
+CREATE POLICY "Admins delete website_settings"
+ON public.website_settings FOR DELETE
+TO authenticated
+USING (public.is_admin());
 
 -- Seed initial row
 INSERT INTO public.website_settings (id, key)

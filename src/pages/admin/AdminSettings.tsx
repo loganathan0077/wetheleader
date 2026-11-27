@@ -241,6 +241,10 @@ ALTER TABLE public.website_settings ADD COLUMN IF NOT EXISTS show_social_in_foot
 ALTER TABLE public.website_settings ADD COLUMN IF NOT EXISTS show_social_in_contact BOOLEAN DEFAULT true;
 ALTER TABLE public.website_settings ADD COLUMN IF NOT EXISTS social_links JSONB DEFAULT '[]'::jsonb;
 
+-- Grant Table Privileges
+GRANT SELECT ON TABLE public.website_settings TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON TABLE public.website_settings TO authenticated;
+
 -- Enable RLS
 ALTER TABLE public.website_settings ENABLE ROW LEVEL SECURITY;
 
@@ -253,11 +257,26 @@ USING (true);
 
 -- 2. Authenticated administrators can manage settings (Secure RLS)
 DROP POLICY IF EXISTS "Admin manage website_settings" ON public.website_settings;
-CREATE POLICY "Admin manage website_settings"
-ON public.website_settings FOR ALL
+DROP POLICY IF EXISTS "Admins manage website_settings" ON public.website_settings;
+DROP POLICY IF EXISTS "Admins insert website_settings" ON public.website_settings;
+DROP POLICY IF EXISTS "Admins update website_settings" ON public.website_settings;
+DROP POLICY IF EXISTS "Admins delete website_settings" ON public.website_settings;
+
+CREATE POLICY "Admins insert website_settings"
+ON public.website_settings FOR INSERT
+TO authenticated
+WITH CHECK (public.is_admin());
+
+CREATE POLICY "Admins update website_settings"
+ON public.website_settings FOR UPDATE
 TO authenticated
 USING (public.is_admin())
 WITH CHECK (public.is_admin());
+
+CREATE POLICY "Admins delete website_settings"
+ON public.website_settings FOR DELETE
+TO authenticated
+USING (public.is_admin());
 
 -- Seed initial row
 INSERT INTO public.website_settings (key)

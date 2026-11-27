@@ -328,16 +328,61 @@ export const settingsService = {
     // 2. Persist to Supabase if configured
     if (isSupabaseConfigured && supabase) {
       try {
-        const { error } = await supabase
-          .from('website_settings')
-          .upsert(payload, { onConflict: 'key' });
-
-        if (error) {
-          console.error('Supabase settings save failed:', error);
+        // Verify active Supabase auth session
+        const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+        if (sessionErr || !sessionData?.session) {
           return {
             success: false,
-            error: `Database save failed: ${error.message} (Code: ${error.code || 'UNKNOWN'}). If this is an RLS or column error, run the updated SQL migration in Supabase SQL Editor.`
+            error: 'Active administrator session not found. Please log in again to save settings to the database.'
           };
+        }
+
+        // Verify authoritative role in public.profiles
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role, is_active')
+          .eq('id', sessionData.session.user.id)
+          .maybeSingle();
+
+        if (profile && (profile.role !== 'admin' || profile.is_active === false)) {
+          return {
+            success: false,
+            error: `User ${sessionData.session.user.email} is registered with role '${profile.role}'. Only verified active administrators can modify website settings.`
+          };
+        }
+
+        // 1st Attempt: UPDATE existing singleton row
+        const { data: updateData, error: updateError } = await supabase
+          .from('website_settings')
+          .update(payload)
+          .eq('key', 'homepage_contact')
+          .select();
+
+        if (updateError) {
+          // If update failed, try upsert
+          const { error: upsertError } = await supabase
+            .from('website_settings')
+            .upsert(payload, { onConflict: 'key' });
+
+          if (upsertError) {
+            console.error('Supabase settings save failed:', upsertError);
+            return {
+              success: false,
+              error: `Database save failed: ${upsertError.message} (Code: ${upsertError.code || 'UNKNOWN'}). If this is error 42501, run supabase/fix_website_settings_permissions.sql in Supabase SQL Editor.`
+            };
+          }
+        } else if (!updateData || updateData.length === 0) {
+          // Row does not exist yet; insert it
+          const { error: insertError } = await supabase
+            .from('website_settings')
+            .insert([payload]);
+
+          if (insertError) {
+            return {
+              success: false,
+              error: `Database save failed: ${insertError.message} (Code: ${insertError.code || 'UNKNOWN'}).`
+            };
+          }
         }
       } catch (err: any) {
         console.error('Supabase settings network error:', err);
