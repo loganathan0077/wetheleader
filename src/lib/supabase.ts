@@ -75,18 +75,34 @@ export async function getMemberPhotoSignedUrl(
 
   if (!cleanPath) return null;
 
+  // 1. Try creating a signed URL from private bucket
   try {
     const { data, error } = await supabase.storage
       .from('member-photos')
       .createSignedUrl(cleanPath, 86400); // 24 hours validity for viewing, printing & PDF export
 
-    if (error || !data?.signedUrl) {
-      console.warn('Supabase createSignedUrl notice:', error?.message);
-      return null;
+    if (!error && data?.signedUrl) {
+      return data.signedUrl;
     }
-    return data.signedUrl;
+    if (error) {
+      console.warn('Supabase createSignedUrl notice:', error.message);
+    }
   } catch (err: any) {
     console.warn('Storage getMemberPhotoSignedUrl exception:', err?.message || err);
-    return null;
   }
+
+  // 2. Fallback: try public URL in case bucket is public or public read policy is active
+  try {
+    const { data: pubData } = supabase.storage
+      .from('member-photos')
+      .getPublicUrl(cleanPath);
+
+    if (pubData?.publicUrl) {
+      return pubData.publicUrl;
+    }
+  } catch (pubErr) {
+    console.warn('Storage getPublicUrl fallback exception:', pubErr);
+  }
+
+  return null;
 }

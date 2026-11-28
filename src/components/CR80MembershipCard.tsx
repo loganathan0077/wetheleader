@@ -87,28 +87,40 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
     const { language } = useLanguage();
     const isTamil = language === 'ta';
 
-    const [photoUrl, setPhotoUrl] = useState<string | null>(member.profile_photo_url || (member as any).photo_path || null);
+    const initialRaw = member.profile_photo_url || (member as any).photo_path || null;
+    const isDirectUrl = initialRaw && (
+      initialRaw.startsWith('data:') || 
+      initialRaw.startsWith('http://') || 
+      initialRaw.startsWith('https://') || 
+      initialRaw.startsWith('blob:')
+    );
+
+    const [photoUrl, setPhotoUrl] = useState<string | null>(isDirectUrl ? initialRaw : null);
     const [photoError, setPhotoError] = useState(false);
 
     useEffect(() => {
       const initial = member.profile_photo_url || (member as any).photo_path || null;
       if (!initial) {
         setPhotoUrl(null);
+        setPhotoError(false);
         return;
       }
+
       if (initial.startsWith('data:') || initial.startsWith('http://') || initial.startsWith('https://') || initial.startsWith('blob:')) {
         setPhotoUrl(initial);
         setPhotoError(false);
       } else {
-        // Resolve signed URL for private Supabase storage path
-        getMemberPhotoSignedUrl(initial).then(signed => {
-          if (signed) {
-            setPhotoUrl(signed);
+        // Resolve signed or public URL for Supabase storage path
+        getMemberPhotoSignedUrl(initial).then(resolvedUrl => {
+          if (resolvedUrl) {
+            setPhotoUrl(resolvedUrl);
             setPhotoError(false);
           } else {
+            console.warn('Could not resolve photo URL for storage path:', initial);
             setPhotoError(true);
           }
-        }).catch(() => {
+        }).catch((err) => {
+          console.warn('Error resolving photo signed URL:', err);
           setPhotoError(true);
         });
       }
@@ -210,8 +222,10 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
                 <img
                   src={photoUrl}
                   alt={member.full_name}
-                  crossOrigin="anonymous"
-                  onError={() => setPhotoError(true)}
+                  onError={() => {
+                    console.warn('Member photo failed to load on card:', photoUrl);
+                    setPhotoError(true);
+                  }}
                   className="w-full h-full object-cover rounded-[8px]"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />

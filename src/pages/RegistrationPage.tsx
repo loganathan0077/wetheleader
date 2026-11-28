@@ -346,7 +346,13 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
         sessionStorage.removeItem(DRAFT_STORAGE_KEY);
       } catch {}
 
-      onSuccess(newMember);
+      // Preserve local photoPreview (data URL) so RegistrationSuccessPage displays photo immediately
+      const memberWithLocalPhoto: Member = {
+        ...newMember,
+        profile_photo_url: photoPreview || newMember.profile_photo_url
+      };
+
+      onSuccess(memberWithLocalPhoto);
     } catch (err: any) {
       console.error('Registration submission error:', err);
       if (err.message === 'DUPLICATE_MOBILE') {

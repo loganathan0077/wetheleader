@@ -31,10 +31,28 @@ export async function prepareElementForCapture(element: HTMLElement): Promise<vo
     }
   }
 
-  // 2. Wait for all <img> elements (photo, logo, QR code) to be fully loaded
+  // 2. Wait for all <img> elements (photo, logo, QR code) to be fully loaded and pre-fetch remote images
   const images = Array.from(element.querySelectorAll('img'));
   await Promise.all(
-    images.map((img) => {
+    images.map(async (img) => {
+      const src = img.getAttribute('src');
+      if (src && (src.startsWith('http://') || src.startsWith('https://')) && !src.startsWith('data:')) {
+        try {
+          const res = await fetch(src, { mode: 'cors' });
+          if (res.ok) {
+            const blob = await res.blob();
+            const dataUrl = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.readAsDataURL(blob);
+            });
+            img.src = dataUrl;
+          }
+        } catch (e) {
+          // If fetch fails, proceed with original src
+        }
+      }
+
       if (img.complete && img.naturalWidth > 0 && img.naturalHeight > 0) {
         return Promise.resolve();
       }
