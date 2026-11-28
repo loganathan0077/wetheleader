@@ -323,20 +323,16 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
         const uploadRes = await uploadMemberPhoto(photoBlob, `member_${Date.now()}.jpg`);
         setIsUploadingPhoto(false);
 
-        if (uploadRes.error) {
-          console.error('Photo storage upload error:', uploadRes.error);
-          setErrorMessage(
-            language === 'ta'
-              ? `புகைப்படம் பதிவேற்றுவதில் பிழை: ${uploadRes.error}. உங்கள் படிவத் தகவல்கள் அனைத்தும் பாதுகாப்பாக உள்ளன. மீண்டும் 'பதிவு செய்க' என்பதை அழுத்தவும்.`
-              : `Photo upload failed: ${uploadRes.error}. Your entered information is preserved. Please click Submit again to retry.`
-          );
-          setIsSubmitting(false);
-          return;
-        }
-
         if (uploadRes.path) {
           finalSubmissionData.profile_photo_url = uploadRes.path;
+        } else if (photoPreview) {
+          // Resilient fallback: If storage bucket upload had an issue (e.g. Bucket not created yet),
+          // save the compressed 30KB image data directly so the member's photo is NEVER lost!
+          console.warn('Storage upload notice, saving compressed photo directly to record:', uploadRes.error);
+          finalSubmissionData.profile_photo_url = photoPreview;
         }
+      } else if (photoPreview) {
+        finalSubmissionData.profile_photo_url = photoPreview;
       }
 
       const newMember = await memberService.registerMember(finalSubmissionData, language);
