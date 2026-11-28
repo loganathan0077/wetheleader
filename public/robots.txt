@@ -1,0 +1,23 @@
+# WE THE LEADER – Kinathukadavu Official robots.txt
+# https://wetheleader.online
+
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /register
+Allow: /download-id
+Allow: /logo.svg
+Allow: /we-the-leader-logo.jpg
+Allow: /apa-manikandakumar.jpg
+Allow: /community-group.jpg
+Allow: /community-activities.jpg
+
+# Protect administrative portal and private verification queries
+Disallow: /admin
+Disallow: /admin/
+Disallow: /*?verify=*
+Disallow: /*?action=download-id*
+
+# Host specification & XML Sitemap
+Host: https://wetheleader.online
+Sitemap: https://wetheleader.online/sitemap.xml

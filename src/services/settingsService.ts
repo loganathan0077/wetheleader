@@ -37,6 +37,12 @@ export interface WebsiteSettings {
   show_social_in_contact?: boolean;
   social_links: SocialLink[];
   updated_at?: string;
+  // SEO Metadata Settings
+  seo_title?: string;
+  seo_description?: string;
+  seo_keywords?: string;
+  seo_og_image?: string;
+  seo_google_verification?: string;
 }
 
 export const DEFAULT_SOCIAL_LINKS: SocialLink[] = [
@@ -128,6 +134,11 @@ export const DEFAULT_SETTINGS: WebsiteSettings = {
   show_social_in_footer: true,
   show_social_in_contact: true,
   social_links: DEFAULT_SOCIAL_LINKS,
+  seo_title: 'We The Leader Kinathukadavu | Youth Leadership & Social Service',
+  seo_description: 'We The Leader is a youth leadership and social service organisation in Kinathukadavu, Coimbatore, Tamil Nadu, focused on community development and positive social change.',
+  seo_keywords: 'We The Leader, We The Leader Kinathukadavu, APA Manikandakumar, We The Leader Coimbatore, We The Leader Pollachi, Social service organisation in Kinathukadavu, Youth leadership organisation in Coimbatore, நாம் தி லீடர் கிணத்துக்கடவு',
+  seo_og_image: 'https://wetheleader.online/we-the-leader-logo.jpg',
+  seo_google_verification: '',
 };
 
 const STORAGE_KEY = 'wtl_website_settings';

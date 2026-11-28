@@ -124,24 +124,27 @@ export const HomePage: React.FC<HomePageProps> = ({ onRegisterClick, onDownloadI
                 </div>
               </div>
 
-              {/* Main Headline (Controlled with CSS clamp, wraps naturally, high-contrast Navy) */}
+              {/* Main Headline with Primary SEO Keyword (Single H1 per page) */}
               <div>
+                <span className="text-xs sm:text-sm font-black text-[#91BD32] tracking-wider uppercase block mb-1">
+                  {isTamil ? 'நாம் தி லீடர் &bull; கிணத்துக்கடவு' : 'We The Leader &bull; Kinathukadavu'}
+                </span>
                 <h1 className="hero-title font-black text-[#20223E] font-tamil tracking-tight text-left">
-                  மாற்றத்தின் தொடக்கமாக நாமே இருப்போம்!
+                  {isTamil ? 'மாற்றத்தின் தொடக்கமாக நாமே இருப்போம்!' : 'We The Leader Kinathukadavu – Youth Leadership & Social Service'}
                 </h1>
                 
                 {/* Supporting Line */}
                 <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-orange-50 border border-[#E98A32]/40 text-[#E98A32] font-black text-xs sm:text-sm md:text-base font-sans">
                   <span className="w-2 h-2 rounded-full bg-[#E98A32]" />
-                  <span>"Be the Beginning of Change"</span>
+                  <span>"Be the Beginning of Change" &bull; Kinathukadavu, Coimbatore</span>
                 </div>
               </div>
 
-              {/* Welcome Description (Responsive clamp typography) */}
+              {/* Welcome Description (Responsive clamp typography with natural local keywords) */}
               <p className="hero-description text-slate-600 font-medium">
                 {isTamil
-                  ? 'WE the Leader அமைப்பிற்கு உங்களை அன்புடன் வரவேற்கிறோம். கிணத்துக்கடவு முழுவதும் உள்ள கிராமங்கள் மற்றும் வார்டுகளை இணைக்கும் ஒரு வலிமையான, அரசியல் சார்பற்ற மக்கள் இயக்கம்.'
-                  : 'Welcome to WE the Leader. Connecting and empowering residents across every village and ward in Kinathukadavu through grassroots community solidarity and leadership.'}
+                  ? 'WE the Leader (நாம் தி லீடர்) அமைப்பிற்கு உங்களை அன்புடன் வரவேற்கிறோம். கிணத்துக்கடவு, பொள்ளாச்சி மற்றும் கோயம்புத்தூர் சுற்றுவட்டாரப் பகுதிகளில் உள்ள கிராமங்கள் மற்றும் வார்டுகளை இணைக்கும் ஒரு வலிமையான, அரசியல் சார்பற்ற இளைஞர் தலைமைத்துவ மற்றும் சமூக சேவை மக்கள் இயக்கம்.'
+                  : 'Welcome to We The Leader Kinathukadavu. A dedicated, non-partisan youth leadership and social service organisation connecting and empowering residents across every village and ward in Kinathukadavu, Pollachi and Coimbatore district through community solidarity and positive social change.'}
               </p>
 
               {/* Primary Call to Action Button (Prominent hero CTA) */}

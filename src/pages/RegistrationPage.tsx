@@ -120,6 +120,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [photoStats, setPhotoStats] = useState<{
     originalSize: string;
     compressedSize: string;
@@ -273,9 +274,10 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
         minQuality: 0.55, // Preserves face clarity on ID cards
       });
 
-      // 3. Save compressed Blob for direct storage upload & zero-copy preview
+      // 3. Save compressed Blob for direct storage upload & persistent preview
       setPhotoBlob(result.blob);
       setPhotoPreview(result.previewUrl);
+      setPhotoDataUrl(result.dataUrl);
       setFormData(prev => ({ ...prev, profile_photo_url: result.dataUrl }));
       setPhotoStats({
         originalSize: formatFileSize(result.originalSizeKB),
@@ -298,6 +300,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
     }
     setPhotoBlob(null);
     setPhotoPreview(null);
+    setPhotoDataUrl(null);
     setPhotoStats(null);
     setPhotoError(null);
     setFormData(prev => ({ ...prev, profile_photo_url: '' }));
@@ -325,14 +328,14 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
 
         if (uploadRes.path) {
           finalSubmissionData.profile_photo_url = uploadRes.path;
-        } else if (photoPreview) {
-          // Resilient fallback: If storage bucket upload had an issue (e.g. Bucket not created yet),
+        } else if (photoDataUrl) {
+          // Resilient fallback: If storage bucket upload had an issue,
           // save the compressed 30KB image data directly so the member's photo is NEVER lost!
           console.warn('Storage upload notice, saving compressed photo directly to record:', uploadRes.error);
-          finalSubmissionData.profile_photo_url = photoPreview;
+          finalSubmissionData.profile_photo_url = photoDataUrl;
         }
-      } else if (photoPreview) {
-        finalSubmissionData.profile_photo_url = photoPreview;
+      } else if (photoDataUrl) {
+        finalSubmissionData.profile_photo_url = photoDataUrl;
       }
 
       const newMember = await memberService.registerMember(finalSubmissionData, language);
@@ -342,10 +345,10 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onSuccess })
         sessionStorage.removeItem(DRAFT_STORAGE_KEY);
       } catch {}
 
-      // Preserve local photoPreview (data URL) so RegistrationSuccessPage displays photo immediately
+      // Preserve persistent photoDataUrl (Base64 JPEG) so RegistrationSuccessPage displays photo immediately without revoked blob issues!
       const memberWithLocalPhoto: Member = {
         ...newMember,
-        profile_photo_url: photoPreview || newMember.profile_photo_url
+        profile_photo_url: photoDataUrl || newMember.profile_photo_url
       };
 
       onSuccess(memberWithLocalPhoto);

@@ -258,10 +258,11 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
               {hasPhotoUploaded && photoUrl && !photoError ? (
                 <img
                   src={photoUrl}
-                  alt={member.full_name}
+                  alt=""
+                  loading="eager"
                   onError={() => {
-                    console.warn('Member photo failed to load on card, trying fallback:', photoUrl);
-                    handleImageError();
+                    console.warn('Member photo failed to load on card, switching to official logo fallback:', photoUrl);
+                    setPhotoError(true);
                   }}
                   className="w-full h-full object-cover rounded-[8px]"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}

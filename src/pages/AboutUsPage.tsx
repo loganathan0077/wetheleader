@@ -45,18 +45,20 @@ export const AboutUsPage: React.FC<AboutUsPageProps> = ({ onBackToHome, onRegist
           </div>
         </div>
 
-        {/* Top Header Badge & Title */}
-        <div className="text-center space-y-2.5 max-w-3xl mx-auto">
+        {/* Top Header Badge & Recommended SEO H1 */}
+        <div className="text-center space-y-2.5 max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#20223E] text-white text-xs font-black tracking-wider uppercase shadow-xs">
             <span className="w-2 h-2 rounded-full bg-[#91BD32]" />
             <span>WE THE LEADER &bull; KINATHUKADAVU</span>
           </div>
-          <h1 className="text-2xl sm:text-4xl font-black text-[#20223E] tracking-tight leading-tight">
-            {isTamil ? 'எங்களைப் பற்றி' : 'ABOUT US'}
+          <h1 className="text-2xl sm:text-4xl font-black text-[#20223E] tracking-tight leading-tight font-sans">
+            {isTamil 
+              ? 'திரு. APA. மணிகண்டகுமார் – நாம் தி லீடர், கிணத்துக்கடவு' 
+              : 'APA Manikandakumar – We The Leader, Kinathukadavu'}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 font-medium flex items-center justify-center gap-1">
             <MapPin className="w-3.5 h-3.5 text-[#E98A32]" />
-            <span>Kinathukadavu | Coimbatore</span>
+            <span>Kinathukadavu &bull; Pollachi &bull; Coimbatore District &bull; Tamil Nadu</span>
           </p>
         </div>
 
@@ -69,9 +71,11 @@ export const AboutUsPage: React.FC<AboutUsPageProps> = ({ onBackToHome, onRegist
               <div className="relative w-full max-w-sm sm:max-w-md rounded-2xl overflow-hidden shadow-lg border-4 border-white bg-slate-100 group">
                 <img
                   src="/apa-manikandakumar.jpg"
-                  alt={isTamil ? 'திரு. APA. மணிகண்டகுமார்' : 'Mr. APA. Manikandakumar'}
+                  alt="APA Manikandakumar - We The Leader Kinathukadavu"
                   className="w-full h-auto object-cover transform transition-transform duration-500 group-hover:scale-102"
                   loading="eager"
+                  width="480"
+                  height="600"
                 />
                 
                 {/* Brand Corner Accent Ribbon */}
@@ -82,9 +86,9 @@ export const AboutUsPage: React.FC<AboutUsPageProps> = ({ onBackToHome, onRegist
 
               {/* Quick Profile Tag below photo */}
               <div className="mt-4 text-center">
-                <h3 className="text-lg sm:text-xl font-black text-[#20223E] leading-tight">
+                <h2 className="text-lg sm:text-xl font-black text-[#20223E] leading-tight">
                   {isTamil ? 'திரு. APA. மணிகண்டகுமார்' : 'Mr. APA. Manikandakumar'}
-                </h3>
+                </h2>
                 <p className="text-xs font-bold text-[#91BD32] uppercase tracking-wider mt-0.5">
                   We The Leader – Kinathukadavu
                 </p>
@@ -112,30 +116,30 @@ export const AboutUsPage: React.FC<AboutUsPageProps> = ({ onBackToHome, onRegist
                 // TAMIL CONTENT
                 <div className="space-y-4 text-sm sm:text-base text-slate-700 leading-relaxed font-tamil">
                   <p className="font-semibold text-slate-800">
-                    We The Leader – Kinathukadavu அமைப்பின் முக்கிய முகமாகத் திகழ்பவர் திரு. APA. மணிகண்டகுமார்.
+                    We The Leader – Kinathukadavu (நாம் தி லீடர்) அமைப்பின் முக்கிய முகமாகத் திகழ்பவர் திரு. APA. மணிகண்டகுமார்.
                   </p>
                   
                   <p>
-                    அண்ணாமலை அவர்களின் வழிகாட்டுதலின்படி, கிணத்துக்கடவு மற்றும் அதன் சுற்றுவட்டாரப் பகுதிகளில் இளைஞர்களை ஒன்றிணைத்து, சமூகப் பொறுப்புணர்வு, மக்கள் சேவை மற்றும் தலைமைத்துவச் சிந்தனைகளை வளர்ப்பதை நோக்கமாகக் கொண்டு செயல்பட்டு வருகிறார்.
+                    அண்ணாமலை அவர்களின் வழிகாட்டுதலின்படி, கிணத்துக்கடவு, பொள்ளாச்சி மற்றும் கோயம்புத்தூர் மாவட்ட சுற்றுவட்டாரப் பகுதிகளில் இளைஞர்களை ஒன்றிணைத்து, சமூகப் பொறுப்புணர்வு, மக்கள் சேவை மற்றும் தலைமைத்துவச் சிந்தனைகளை வளர்ப்பதை நோக்கமாகக் கொண்டு செயல்பட்டு வருகிறார்.
                   </p>
 
                   <p>
-                    இளைஞர்களின் திறமைகளை வெளிக்கொண்டு வருதல், மக்களின் தேவைகளுக்காகக் குரல் கொடுத்தல், சமூக நலப் பணிகளில் பங்கேற்றல் மற்றும் ஊர் வளர்ச்சியில் இளைஞர்களின் பங்களிப்பை அதிகரித்தல் ஆகியவற்றை முக்கிய நோக்கங்களாகக் கொண்டுள்ளார்.
+                    இளைஞர்களின் திறமைகளை வெளிக்கொண்டு வருதல், கிராமப்புற மக்களின் தேவைகளுக்காகக் குரல் கொடுத்தல், சமூக நலப் பணிகளில் பங்கேற்றல் மற்றும் ஊர் வளர்ச்சியில் இளைஞர்களின் ஆக்கப்பூர்வமான பங்களிப்பை அதிகரித்தல் ஆகியவற்றை முக்கிய பணிகளாக முன்னெடுத்துள்ளார்.
                   </p>
                 </div>
               ) : (
                 // ENGLISH CONTENT
                 <div className="space-y-4 text-sm sm:text-base text-slate-700 leading-relaxed">
                   <p className="font-semibold text-slate-800">
-                    Mr. APA. Manikandakumar is a prominent face of We The Leader – Kinathukadavu.
+                    Mr. APA. Manikandakumar is the prominent leader and public face of We The Leader – Kinathukadavu.
                   </p>
 
                   <p>
-                    Under the guidance of Mr. Annamalai, he works towards bringing young people together across Kinathukadavu and surrounding areas, encouraging social responsibility, public service and leadership.
+                    Under the guidance of Mr. Annamalai, he works dedicatedly to unite and inspire youth across Kinathukadavu, Pollachi and the wider Coimbatore district, instilling social responsibility, grassroots civic action and progressive community leadership.
                   </p>
 
                   <p>
-                    His focus is on encouraging youth participation, bringing attention to people's needs, supporting community welfare initiatives and creating opportunities for young people to contribute to the development of their locality.
+                    His focus is on empowering youth participation, advocating for local community needs, leading welfare activities and creating opportunities for young people to actively contribute to the sustainable development of our villages and wards.
                   </p>
                 </div>
               )}

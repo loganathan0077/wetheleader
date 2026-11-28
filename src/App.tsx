@@ -19,6 +19,8 @@ import { Member } from './types';
 import { memberService } from './services/memberService';
 import { isAdminHost, getPublicSiteUrl, getAdminPortalUrl } from './utils/subdomain';
 import { ShieldCheck, CheckCircle2, X, AlertCircle, MapPin, Calendar, User } from 'lucide-react';
+import { SEOHead } from './components/SEOHead';
+import { getOrganizationSchema, getWebSiteSchema, getPersonSchema } from './utils/seo';
 
 export const AppContent: React.FC = () => {
   const { currentView, setCurrentView, recentCreatedMember, setRecentCreatedMember } = useAppState();
@@ -63,30 +65,50 @@ export const AppContent: React.FC = () => {
   const [verifiedMember, setVerifiedMember] = useState<Member | null>(null);
   const [invalidVerifyId, setInvalidVerifyId] = useState<string | null>(null);
 
-  // Check URL query params for ?verify=WTL-2026-XXXXX or ?action=download-id
+  const navigateToView = (view: string, pushHistory = true) => {
+    setCurrentView(view);
+    if (pushHistory && typeof window !== 'undefined') {
+      const urlPath = view === 'home' ? '/' : `/${view}`;
+      window.history.pushState({ view }, '', urlPath);
+    }
+  };
+
+  // Check URL query params, hash and clean pathname on mount & popstate
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const verifyId = params.get('verify');
-    if (verifyId) {
-      memberService.getMemberById(verifyId).then(m => {
-        if (m) {
-          setVerifiedMember(m);
-        } else {
-          setInvalidVerifyId(verifyId);
-        }
-      });
-    }
-    const action = params.get('action');
-    if (action === 'download-id' || window.location.hash === '#download-id') {
-      setCurrentView('download-id');
-    }
-    const view = params.get('view');
-    if (view === 'about' || window.location.hash === '#about-us' || window.location.hash === '#about') {
-      setCurrentView('about');
-    }
-    if (window.location.hash === '#register' || params.get('view') === 'register') {
-      setCurrentView('register');
-    }
+    const handleLocationChange = () => {
+      if (typeof window === 'undefined') return;
+      const pathname = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/';
+      const hash = window.location.hash.toLowerCase();
+      const params = new URLSearchParams(window.location.search);
+
+      const verifyId = params.get('verify');
+      if (verifyId) {
+        memberService.getMemberById(verifyId).then(m => {
+          if (m) {
+            setVerifiedMember(m);
+          } else {
+            setInvalidVerifyId(verifyId);
+          }
+        });
+      }
+
+      const action = params.get('action');
+      const view = params.get('view');
+
+      if (pathname === '/about' || view === 'about' || hash === '#about' || hash === '#about-us') {
+        setCurrentView('about');
+      } else if (pathname === '/register' || view === 'register' || hash === '#register') {
+        setCurrentView('register');
+      } else if (pathname === '/download-id' || action === 'download-id' || hash === '#download-id') {
+        setCurrentView('download-id');
+      } else if (pathname === '/' || pathname === '') {
+        setCurrentView('home');
+      }
+    };
+
+    handleLocationChange();
+    window.addEventListener('popstate', handleLocationChange);
+    return () => window.removeEventListener('popstate', handleLocationChange);
   }, []);
 
   const closeVerificationModal = () => {
@@ -171,9 +193,104 @@ export const AppContent: React.FC = () => {
   // =========================================================================
   return (
     <div className="flex flex-col min-h-screen bg-[#F5F7FA] text-[#20223E]">
+      {/* Dynamic SEO Head Management */}
+      {currentView === 'home' && (
+        <SEOHead 
+          title="We The Leader Kinathukadavu | Youth Leadership & Social Service"
+          description="We The Leader is a youth leadership and social service organisation in Kinathukadavu, Coimbatore, Tamil Nadu, focused on community development and positive social change."
+          keywords={[
+            'We The Leader',
+            'We The Leader Kinathukadavu',
+            'APA Manikandakumar',
+            'We The Leader Coimbatore',
+            'We The Leader Pollachi',
+            'Social service organisation in Kinathukadavu',
+            'Youth leadership organisation in Coimbatore',
+            'Community service in Kinathukadavu',
+            'Youth development in Pollachi',
+            'Social activities in Coimbatore',
+            'நாம் தி லீடர் கிணத்துக்கடவு',
+            'கிணத்துக்கடவு சமூக சேவை அமைப்பு',
+            'கிணத்துக்கடவு இளைஞர் அமைப்பு',
+            'கோயம்புத்தூர் சமூக சேவை',
+            'இளைஞர் தலைமைத்துவ அமைப்பு'
+          ]}
+          canonicalUrl="https://wetheleader.online/"
+          ogType="website"
+          schemas={[getOrganizationSchema(), getWebSiteSchema()]}
+        />
+      )}
+
+      {currentView === 'about' && (
+        <SEOHead 
+          title="APA Manikandakumar | We The Leader Kinathukadavu"
+          description="Learn about APA Manikandakumar and We The Leader, a youth leadership and social service organisation working in Kinathukadavu, Coimbatore district, Tamil Nadu."
+          keywords={[
+            'APA Manikandakumar',
+            'APA Manikandakumar Kinathukadavu',
+            'We The Leader',
+            'We The Leader Kinathukadavu',
+            'Youth leadership organisation in Coimbatore',
+            'Community service in Kinathukadavu',
+            'Youth development in Pollachi',
+            'திரு APA மணிகண்டகுமார்',
+            'நாம் தி லீடர் கிணத்துக்கடவு'
+          ]}
+          canonicalUrl="https://wetheleader.online/about"
+          ogImage="https://wetheleader.online/apa-manikandakumar.jpg"
+          ogType="profile"
+          breadcrumbs={[
+            { name: 'Home', url: '/' },
+            { name: 'APA Manikandakumar (About)', url: '/about' }
+          ]}
+          schemas={[getPersonSchema(), getOrganizationSchema()]}
+        />
+      )}
+
+      {currentView === 'register' && (
+        <SEOHead 
+          title="Member Registration | We The Leader Kinathukadavu"
+          description="Join We The Leader Kinathukadavu as an active member or volunteer. 1-minute digital registration for youth leadership and community service in Coimbatore district."
+          keywords={[
+            'We The Leader registration',
+            'volunteer registration Kinathukadavu',
+            'youth membership Coimbatore',
+            'social service volunteer Pollachi',
+            'உறுப்பினர் பதிவு நாம் தி லீடர்'
+          ]}
+          canonicalUrl="https://wetheleader.online/register"
+          breadcrumbs={[
+            { name: 'Home', url: '/' },
+            { name: 'Member Registration', url: '/register' }
+          ]}
+        />
+      )}
+
+      {currentView === 'download-id' && (
+        <SEOHead 
+          title="Download Membership ID Card | We The Leader Kinathukadavu"
+          description="Download or print your official We The Leader digital membership ID card. Verified digital card for active members in Kinathukadavu and Coimbatore."
+          canonicalUrl="https://wetheleader.online/download-id"
+          noindex={true}
+          breadcrumbs={[
+            { name: 'Home', url: '/' },
+            { name: 'Download ID Card', url: '/download-id' }
+          ]}
+        />
+      )}
+
+      {currentView === 'success' && (
+        <SEOHead 
+          title="Registration Successful | We The Leader Kinathukadavu"
+          description="Welcome to We The Leader Kinathukadavu. Your official digital membership has been created."
+          canonicalUrl="https://wetheleader.online/register"
+          noindex={true}
+        />
+      )}
+
       <Header 
         currentView={currentView} 
-        onNavigate={(view) => setCurrentView(view)} 
+        onNavigate={(view) => navigateToView(view)} 
         isAdminLoggedIn={isAdminLoggedIn} 
       />
 
@@ -181,13 +298,11 @@ export const AppContent: React.FC = () => {
         {currentView === 'home' && (
           <HomePage 
             onRegisterClick={() => {
-              window.location.hash = '#register';
-              setCurrentView('register');
+              navigateToView('register');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             onDownloadIdClick={() => {
-              window.location.hash = '#download-id';
-              setCurrentView('download-id');
+              navigateToView('download-id');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           />
@@ -196,8 +311,7 @@ export const AppContent: React.FC = () => {
         {currentView === 'download-id' && (
           <DownloadIdCardPage 
             onBackToHome={() => {
-              window.location.hash = '';
-              setCurrentView('home');
+              navigateToView('home');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           />
@@ -206,13 +320,11 @@ export const AppContent: React.FC = () => {
         {currentView === 'about' && (
           <AboutUsPage 
             onBackToHome={() => {
-              window.location.hash = '';
-              setCurrentView('home');
+              navigateToView('home');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             onRegisterClick={() => {
-              window.location.hash = '#register';
-              setCurrentView('register');
+              navigateToView('register');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           />
@@ -222,8 +334,7 @@ export const AppContent: React.FC = () => {
           <RegistrationPage 
             onSuccess={handleRegistrationSuccess}
             onCancel={() => {
-              window.location.hash = '';
-              setCurrentView('home');
+              navigateToView('home');
             }}
           />
         )}
@@ -232,14 +343,14 @@ export const AppContent: React.FC = () => {
           <RegistrationSuccessPage 
             member={recentCreatedMember}
             onHomeClick={() => {
-              setCurrentView('home');
+              navigateToView('home');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           />
         )}
       </main>
 
-      <Footer onNavigate={(view) => setCurrentView(view)} />
+      <Footer onNavigate={(view) => navigateToView(view)} />
 
       {/* =========================================================================
           QR CODE VERIFICATION RESULT MODAL

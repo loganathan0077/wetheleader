@@ -34,14 +34,16 @@ import {
   ArrowDown,
   ExternalLink,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  Globe,
+  Search
 } from 'lucide-react';
 
 export const AdminSettings: React.FC = () => {
   const { t, language } = useLanguage();
 
   // Sub-tabs in Settings
-  const [activeSection, setActiveSection] = useState<'contact-settings' | 'social-settings' | 'database'>('contact-settings');
+  const [activeSection, setActiveSection] = useState<'contact-settings' | 'social-settings' | 'seo-settings' | 'database'>('contact-settings');
 
   // Authoritative & Working Settings State
   const [initialSettings, setInitialSettings] = useState<WebsiteSettings>(() => settingsService.getSettings());
@@ -116,6 +118,10 @@ export const AdminSettings: React.FC = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleTextChange = (field: keyof WebsiteSettings, value: string) => {
+    setSettings(prev => ({ ...prev, [field]: value }));
   };
 
   // Social link manipulation helpers
@@ -240,6 +246,11 @@ CREATE TABLE IF NOT EXISTS public.website_settings (
 ALTER TABLE public.website_settings ADD COLUMN IF NOT EXISTS show_social_in_footer BOOLEAN DEFAULT true;
 ALTER TABLE public.website_settings ADD COLUMN IF NOT EXISTS show_social_in_contact BOOLEAN DEFAULT true;
 ALTER TABLE public.website_settings ADD COLUMN IF NOT EXISTS social_links JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.website_settings ADD COLUMN IF NOT EXISTS seo_title TEXT;
+ALTER TABLE public.website_settings ADD COLUMN IF NOT EXISTS seo_description TEXT;
+ALTER TABLE public.website_settings ADD COLUMN IF NOT EXISTS seo_keywords TEXT;
+ALTER TABLE public.website_settings ADD COLUMN IF NOT EXISTS seo_og_image TEXT;
+ALTER TABLE public.website_settings ADD COLUMN IF NOT EXISTS seo_google_verification TEXT;
 
 -- Grant Table Privileges
 GRANT SELECT ON TABLE public.website_settings TO anon, authenticated;
@@ -340,6 +351,18 @@ ON CONFLICT (key) DO NOTHING;
           >
             <Share2 className="w-3.5 h-3.5 text-[#2878B9]" />
             <span>Social Media</span>
+          </button>
+
+          <button
+            onClick={() => setActiveSection('seo-settings')}
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              activeSection === 'seo-settings'
+                ? 'bg-white text-[#20223E] shadow-sm'
+                : 'text-slate-600 hover:text-[#20223E]'
+            }`}
+          >
+            <Globe className="w-3.5 h-3.5 text-[#91BD32]" />
+            <span>SEO & Search</span>
           </button>
           
           <button
@@ -1107,7 +1130,162 @@ ON CONFLICT (key) DO NOTHING;
       )}
 
       {/* =========================================================================
-          SECTION 3: DATABASE & SUPABASE SETUP
+          SECTION 3: SEO & SEARCH ENGINE OPTIMIZATION
+         ========================================================================= */}
+      {activeSection === 'seo-settings' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
+              <div>
+                <h2 className="text-lg font-extrabold text-[#20223E] flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-[#91BD32]" />
+                  <span>Search Engine Optimization (SEO) & Google Indexing</span>
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                  Optimize your discoverability on Google, Bing, and social platforms for Kinathukadavu, Coimbatore, and Tamil Nadu.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleSaveSettings()}
+                disabled={isSaving}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#91BD32] to-[#7fa82b] hover:opacity-95 text-white font-extrabold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 flex-shrink-0"
+              >
+                {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                <span>{isSaving ? 'Saving Changes...' : 'Save SEO Settings'}</span>
+              </button>
+            </div>
+
+            {/* Google Search Result Preview Card */}
+            <div className="bg-slate-50 rounded-xl p-5 border border-slate-200 space-y-2">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Search className="w-3.5 h-3.5 text-[#2878B9]" />
+                Google Search Result (SERP) Live Preview
+              </span>
+              <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs max-w-2xl font-sans">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center p-0.5 border border-slate-200">
+                    <img src="/logo.svg" alt="WTL" className="w-4 h-4 object-contain" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs text-slate-800 font-medium leading-none">We The Leader</span>
+                    <span className="text-[10px] text-slate-500 leading-none mt-0.5">https://wetheleader.online</span>
+                  </div>
+                </div>
+                <h3 className="text-base sm:text-lg font-medium text-[#1a0dab] hover:underline cursor-pointer leading-snug">
+                  {settings.seo_title || 'We The Leader Kinathukadavu | Youth Leadership & Social Service'}
+                </h3>
+                <p className="text-xs sm:text-sm text-[#4d5156] mt-1 leading-relaxed line-clamp-2">
+                  {settings.seo_description || 'We The Leader is a youth leadership and social service organisation in Kinathukadavu, Coimbatore, Tamil Nadu, focused on community development and positive social change.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Form Fields */}
+            <div className="grid grid-cols-1 gap-6 pt-2">
+              <div>
+                <label className="block text-xs font-bold text-[#20223E] uppercase tracking-wider mb-2">
+                  Primary Website SEO Title
+                </label>
+                <input
+                  type="text"
+                  value={settings.seo_title || ''}
+                  onChange={e => handleTextChange('seo_title', e.target.value)}
+                  placeholder="We The Leader Kinathukadavu | Youth Leadership & Social Service"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#91BD32] text-[#20223E]"
+                />
+                <p className="text-[11px] text-slate-500 mt-1.5">
+                  Optimal length: 50–60 characters. Appears as the clickable headline in Google search results.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#20223E] uppercase tracking-wider mb-2">
+                  Meta Description
+                </label>
+                <textarea
+                  rows={3}
+                  value={settings.seo_description || ''}
+                  onChange={e => handleTextChange('seo_description', e.target.value)}
+                  placeholder="We The Leader is a youth leadership and social service organisation in Kinathukadavu, Coimbatore, Tamil Nadu..."
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#91BD32] text-[#20223E]"
+                />
+                <p className="text-[11px] text-slate-500 mt-1.5">
+                  Optimal length: 140–160 characters. Summarizes the organization's purpose in Kinathukadavu and Coimbatore.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#20223E] uppercase tracking-wider mb-2">
+                  Search Keywords (Comma Separated)
+                </label>
+                <input
+                  type="text"
+                  value={settings.seo_keywords || ''}
+                  onChange={e => handleTextChange('seo_keywords', e.target.value)}
+                  placeholder="We The Leader, Kinathukadavu, APA Manikandakumar, Coimbatore, Youth Leadership, நாம் தி லீடர்"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#91BD32] text-[#20223E]"
+                />
+                <p className="text-[11px] text-slate-500 mt-1.5">
+                  Primary and local search keywords in both English and Tamil.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#20223E] uppercase tracking-wider mb-2">
+                    Open Graph Social Share Image URL
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.seo_og_image || ''}
+                    onChange={e => handleTextChange('seo_og_image', e.target.value)}
+                    placeholder="https://wetheleader.online/we-the-leader-logo.jpg"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#91BD32] text-[#20223E]"
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1.5">
+                    Recommended dimensions: 1200 × 630 px. Displayed when links are shared on WhatsApp, Facebook, or Twitter.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#20223E] uppercase tracking-wider mb-2">
+                    Google Search Console Verification Tag / Code
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.seo_google_verification || ''}
+                    onChange={e => handleTextChange('seo_google_verification', e.target.value)}
+                    placeholder="e.g. google-site-verification code or full meta tag"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#91BD32] text-[#20223E]"
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1.5">
+                    Paste the verification code from Google Search Console to prove ownership of wetheleader.online.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Structured Data & Indexing Status Info */}
+            <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 space-y-2 text-xs">
+              <div className="font-bold flex items-center gap-1.5 text-blue-800">
+                <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                <span>Automated Technical SEO Features Active</span>
+              </div>
+              <ul className="list-disc list-inside space-y-1 text-blue-800">
+                <li><strong>JSON-LD Structured Data:</strong> Organization, WebSite, Person (APA Manikandakumar), and BreadcrumbList schemas.</li>
+                <li><strong>About Page Optimization:</strong> Dedicated H1 and bilingual profile targeting <em>APA Manikandakumar</em> and Kinathukadavu.</li>
+                <li><strong>Sitemap & Robots:</strong> Accessible live at <code className="font-mono bg-blue-100 px-1 py-0.5 rounded">/sitemap.xml</code> and <code className="font-mono bg-blue-100 px-1 py-0.5 rounded">/robots.txt</code>.</li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          SECTION 4: DATABASE & SUPABASE SETUP
          ========================================================================= */}
       {activeSection === 'database' && (
         <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 space-y-6">

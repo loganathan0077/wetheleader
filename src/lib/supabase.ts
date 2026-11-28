@@ -91,10 +91,10 @@ export async function getMemberPhotoSignedUrl(
   if (!cleanPath) return null;
 
   // 3. Try downloading the object as a Blob and creating an object URL.
-  // This is the MOST reliable approach on mobile devices because:
-  // - It uses the Supabase Storage API directly with the anon key
-  // - It produces an in-origin blob: URL with ZERO CORS restrictions
-  // - It never expires during the session and renders cleanly in canvas/PDF
+  // This is the MOST reliable approach on mobile devices and exports:
+  // - Validates that the file actually exists in storage
+  // - Produces an in-origin blob: URL with ZERO CORS restrictions
+  // - Renders cleanly in HTML5 canvas and jsPDF
   try {
     const { data: blobData, error: downloadError } = await supabase.storage
       .from('member-photos')
@@ -104,7 +104,7 @@ export async function getMemberPhotoSignedUrl(
       return URL.createObjectURL(blobData);
     }
   } catch (blobErr) {
-    // Continue to next methods
+    // Continue to next check
   }
 
   // 4. Try creating a signed URL from bucket (valid for 24 hours)
@@ -117,21 +117,11 @@ export async function getMemberPhotoSignedUrl(
       return data.signedUrl;
     }
   } catch (err: any) {
-    // Continue to public URL
+    // If signed URL generation failed or object is missing, fall through
   }
 
-  // 5. Try direct public URL (when bucket has public: true)
-  try {
-    const { data: pubData } = supabase.storage
-      .from('member-photos')
-      .getPublicUrl(cleanPath);
-
-    if (pubData?.publicUrl) {
-      return pubData.publicUrl;
-    }
-  } catch (pubErr) {
-    // Fall through
-  }
-
+  // If the file cannot be downloaded or signed, it does not exist in storage.
+  // Returning null ensures the membership card immediately renders the clean
+  // official "WE THE LEADER MEMBER" logo rather than a broken image box.
   return null;
 }

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
+  <!-- 1. Home Page: We The Leader Kinathukadavu -->
+  <url>
+    <loc>https://wetheleader.online/</loc>
+    <lastmod>2026-11-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="ta" href="https://wetheleader.online/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://wetheleader.online/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://wetheleader.online/" />
+    <image:image>
+      <image:loc>https://wetheleader.online/we-the-leader-logo.jpg</image:loc>
+      <image:title>We The Leader Kinathukadavu Official Logo</image:title>
+      <image:caption>We The Leader - Lead The Change, Kinathukadavu, Coimbatore</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://wetheleader.online/community-group.jpg</image:loc>
+      <image:title>We The Leader Community Group Photograph</image:title>
+      <image:caption>Youth Leadership and Community Development in Kinathukadavu</image:caption>
+    </image:image>
+  </url>
+
+  <!-- 2. About Page: APA Manikandakumar -->
+  <url>
+    <loc>https://wetheleader.online/about</loc>
+    <lastmod>2026-11-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="ta" href="https://wetheleader.online/about" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://wetheleader.online/about" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://wetheleader.online/about" />
+    <image:image>
+      <image:loc>https://wetheleader.online/apa-manikandakumar.jpg</image:loc>
+      <image:title>APA Manikandakumar - We The Leader Kinathukadavu</image:title>
+      <image:caption>APA Manikandakumar, Founder and Leader of We The Leader</image:caption>
+    </image:image>
+  </url>
+
+  <!-- 3. Member Registration -->
+  <url>
+    <loc>https://wetheleader.online/register</loc>
+    <lastmod>2026-11-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="ta" href="https://wetheleader.online/register" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://wetheleader.online/register" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://wetheleader.online/register" />
+  </url>
+
+  <!-- 4. Download ID Card Portal -->
+  <url>
+    <loc>https://wetheleader.online/download-id</loc>
+    <lastmod>2026-11-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="ta" href="https://wetheleader.online/download-id" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://wetheleader.online/download-id" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://wetheleader.online/download-id" />
+  </url>
+
+</urlset>
