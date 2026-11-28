@@ -2,7 +2,7 @@ import React, { forwardRef, useState, useEffect } from 'react';
 import { Member } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { MapPin } from 'lucide-react';
-import { getMemberPhotoSignedUrl } from '../lib/supabase';
+import { getMemberPhotoSignedUrl, supabase } from '../lib/supabase';
 
 interface CR80MembershipCardProps {
   member: Member;
@@ -87,44 +87,81 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
     const { language } = useLanguage();
     const isTamil = language === 'ta';
 
-    const initialRaw = member.profile_photo_url || (member as any).photo_path || null;
-    const isDirectUrl = initialRaw && (
-      initialRaw.startsWith('data:') || 
-      initialRaw.startsWith('http://') || 
-      initialRaw.startsWith('https://') || 
-      initialRaw.startsWith('blob:')
+    const rawPhoto = (member.profile_photo_url || (member as any).photo_path || '').trim();
+    const hasPhotoUploaded = Boolean(
+      rawPhoto && 
+      rawPhoto !== 'null' && 
+      rawPhoto !== 'undefined' && 
+      rawPhoto !== '""' &&
+      !rawPhoto.includes('/logo.svg') &&
+      !rawPhoto.includes('we-the-leader-logo')
     );
 
-    const [photoUrl, setPhotoUrl] = useState<string | null>(isDirectUrl ? initialRaw : null);
+    const isDirectUrl = hasPhotoUploaded && (
+      rawPhoto.startsWith('data:') || 
+      rawPhoto.startsWith('blob:') || 
+      rawPhoto.includes('token=')
+    );
+
+    const [photoUrl, setPhotoUrl] = useState<string | null>(isDirectUrl ? rawPhoto : null);
     const [photoError, setPhotoError] = useState(false);
 
     useEffect(() => {
-      const initial = member.profile_photo_url || (member as any).photo_path || null;
-      if (!initial) {
+      if (!hasPhotoUploaded) {
         setPhotoUrl(null);
         setPhotoError(false);
         return;
       }
 
-      if (initial.startsWith('data:') || initial.startsWith('http://') || initial.startsWith('https://') || initial.startsWith('blob:')) {
-        setPhotoUrl(initial);
+      if (rawPhoto.startsWith('data:') || rawPhoto.startsWith('blob:') || rawPhoto.includes('token=')) {
+        setPhotoUrl(rawPhoto);
         setPhotoError(false);
-      } else {
-        // Resolve signed or public URL for Supabase storage path
-        getMemberPhotoSignedUrl(initial).then(resolvedUrl => {
-          if (resolvedUrl) {
-            setPhotoUrl(resolvedUrl);
-            setPhotoError(false);
-          } else {
-            console.warn('Could not resolve photo URL for storage path:', initial);
-            setPhotoError(true);
-          }
-        }).catch((err) => {
-          console.warn('Error resolving photo signed URL:', err);
-          setPhotoError(true);
-        });
+        return;
       }
-    }, [member.profile_photo_url, (member as any).photo_path]);
+
+      // Resolve display URL (Blob URL, signed URL, or public URL)
+      let isMounted = true;
+      getMemberPhotoSignedUrl(rawPhoto).then(resolvedUrl => {
+        if (!isMounted) return;
+        if (resolvedUrl) {
+          setPhotoUrl(resolvedUrl);
+          setPhotoError(false);
+        } else {
+          console.warn('Could not resolve photo URL for storage path:', rawPhoto);
+          setPhotoError(true);
+        }
+      }).catch((err) => {
+        if (!isMounted) return;
+        console.warn('Error resolving photo URL:', err);
+        setPhotoError(true);
+      });
+
+      return () => {
+        isMounted = false;
+      };
+    }, [rawPhoto, hasPhotoUploaded]);
+
+    // Fallback handler if <img src={photoUrl}> triggers onError
+    const handleImageError = async () => {
+      // If photo failed to load and was not already a blob URL, try downloading directly as blob
+      if (hasPhotoUploaded && !photoUrl?.startsWith('blob:') && supabase) {
+        try {
+          let cleanPath = rawPhoto;
+          if (cleanPath.includes('/member-photos/')) {
+            cleanPath = cleanPath.split('/member-photos/').pop() || cleanPath;
+          }
+          cleanPath = cleanPath.replace(/^\/?(member-photos\/)+/, '').replace(/^\/+/, '').split('?')[0];
+          const { data: blob } = await supabase.storage.from('member-photos').download(cleanPath);
+          if (blob && blob.size > 0) {
+            const blobUrl = URL.createObjectURL(blob);
+            setPhotoUrl(blobUrl);
+            setPhotoError(false);
+            return;
+          }
+        } catch {}
+      }
+      setPhotoError(true);
+    };
 
     const formattedDate = member.registration_date
       ? new Date(member.registration_date).toLocaleDateString('en-IN', {
@@ -218,13 +255,13 @@ export const CR80MembershipCard = forwardRef<HTMLDivElement, CR80MembershipCardP
               className="w-[84px] h-[98px] rounded-xl border-[2.5px] border-[#91BD32] p-0.5 bg-white shadow-xs overflow-hidden relative flex items-center justify-center flex-shrink-0"
               style={{ width: '84px', height: '98px', maxWidth: '84px', maxHeight: '98px', flexShrink: 0 }}
             >
-              {photoUrl && !photoError ? (
+              {hasPhotoUploaded && photoUrl && !photoError ? (
                 <img
                   src={photoUrl}
                   alt={member.full_name}
                   onError={() => {
-                    console.warn('Member photo failed to load on card:', photoUrl);
-                    setPhotoError(true);
+                    console.warn('Member photo failed to load on card, trying fallback:', photoUrl);
+                    handleImageError();
                   }}
                   className="w-full h-full object-cover rounded-[8px]"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}

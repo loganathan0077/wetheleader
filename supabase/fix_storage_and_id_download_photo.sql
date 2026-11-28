@@ -1,32 +1,35 @@
 -- ==============================================================================
--- WE THE LEADER: FIX STORAGE SIGNED URL ACCESS AND MEMBERSHIP CARD PHOTO
--- Resolves: Self-service photo retrieval for ID card download (WTL-2026-00002)
+-- WE THE LEADER: FIX STORAGE ACCESS AND MEMBERSHIP CARD PHOTO FOR MOBILE
+-- Resolves: Photo retrieval for ID card download & mobile card viewing (WTL-2026-00002)
+--           Ensures member-photos bucket is accessible for card rendering & PDF export
 --           Masks sensitive identity numbers (Aadhaar, Voter ID) in verification RPC
---           Preserves private bucket security (bucket remains public = false)
 -- ==============================================================================
 
--- 1. Ensure 'member-photos' bucket exists and remains strictly private
+-- 1. Ensure 'member-photos' bucket exists and is public for reliable card rendering & downloads
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
     'member-photos', 
     'member-photos', 
-    false, 
+    true, 
     5242880, 
     ARRAY['image/jpeg', 'image/png', 'image/webp']
 )
 ON CONFLICT (id) DO UPDATE
 SET file_size_limit = 5242880,
     allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp'],
-    public = false;
+    public = true;
 
--- 2. Allow SELECT on storage.objects for 'member-photos' so Supabase can generate Signed URLs
--- Note: When bucket is private (public = false), files CANNOT be accessed directly via public URL.
--- Supabase Storage requires SELECT permission on storage.objects to generate HMAC-signed URLs.
--- This allows both the Admin Dashboard and the Self-Download verification flow to generate signed URLs.
+-- Update existing bucket to public so mobile browsers and download page can load images directly
+UPDATE storage.buckets
+SET public = true
+WHERE id = 'member-photos';
+
+-- 2. Allow SELECT on storage.objects for 'member-photos' so anyone can read photos
 DROP POLICY IF EXISTS "Admins and coordinators access member photos" ON storage.objects;
 DROP POLICY IF EXISTS "Allow member photos selection for signed URLs" ON storage.objects;
+DROP POLICY IF EXISTS "Public read member photos" ON storage.objects;
 
-CREATE POLICY "Allow member photos selection for signed URLs"
+CREATE POLICY "Public read member photos"
 ON storage.objects FOR SELECT
 TO anon, authenticated
 USING (bucket_id = 'member-photos');

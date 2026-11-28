@@ -43,25 +43,40 @@ export async function uploadMemberPhoto(
 }
 
 /**
- * Retrieves a signed URL for a protected member photo in the private 'member-photos' bucket.
- * Cleans leading/bucket prefixes, supports 24-hour expiration (86400s), and preserves external/data URLs.
+ * Retrieves a reliable display URL for a member's profile photo in Supabase storage.
+ * 
+ * Supports:
+ * 1. Data URLs (data:image/...) and Blob URLs (blob:...)
+ * 2. Signed URLs with active token (?token=...)
+ * 3. Downloading object as Blob (URL.createObjectURL) - 100% reliable on mobile browsers, bypasses CORS restrictions
+ * 4. Generating signed URL via createSignedUrl (for authenticated admins / policy permitted roles)
+ * 5. Direct public storage URL via getPublicUrl (when bucket is public)
  */
 export async function getMemberPhotoSignedUrl(
   path: string
 ): Promise<string | null> {
-  if (!supabase || !path) return null;
+  if (!path) return null;
   const trimmed = path.trim();
-  if (!trimmed) return null;
+  if (!trimmed || trimmed === 'null' || trimmed === 'undefined' || trimmed === '""') {
+    return null;
+  }
 
-  // If it's already a full data URL, blob URL, or external link
+  // 1. If it's already an in-memory data URL or blob URL, return immediately
   if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
     return trimmed;
   }
 
-  // If it is already a signed URL with active token
+  // 2. If it is already a signed URL with active token
   if (trimmed.includes('token=')) {
     return trimmed;
   }
+
+  // If path is a general external HTTP URL not matching Supabase storage
+  if ((trimmed.startsWith('http://') || trimmed.startsWith('https://')) && !trimmed.includes('/member-photos/')) {
+    return trimmed;
+  }
+
+  if (!supabase) return null;
 
   // Sanitize path: strip redundant bucket name prefixes, domain URLs, or leading slashes
   let cleanPath = trimmed;
@@ -75,23 +90,37 @@ export async function getMemberPhotoSignedUrl(
 
   if (!cleanPath) return null;
 
-  // 1. Try creating a signed URL from private bucket
+  // 3. Try downloading the object as a Blob and creating an object URL.
+  // This is the MOST reliable approach on mobile devices because:
+  // - It uses the Supabase Storage API directly with the anon key
+  // - It produces an in-origin blob: URL with ZERO CORS restrictions
+  // - It never expires during the session and renders cleanly in canvas/PDF
+  try {
+    const { data: blobData, error: downloadError } = await supabase.storage
+      .from('member-photos')
+      .download(cleanPath);
+
+    if (!downloadError && blobData && blobData.size > 0) {
+      return URL.createObjectURL(blobData);
+    }
+  } catch (blobErr) {
+    // Continue to next methods
+  }
+
+  // 4. Try creating a signed URL from bucket (valid for 24 hours)
   try {
     const { data, error } = await supabase.storage
       .from('member-photos')
-      .createSignedUrl(cleanPath, 86400); // 24 hours validity for viewing, printing & PDF export
+      .createSignedUrl(cleanPath, 86400);
 
     if (!error && data?.signedUrl) {
       return data.signedUrl;
     }
-    if (error) {
-      console.warn('Supabase createSignedUrl notice:', error.message);
-    }
   } catch (err: any) {
-    console.warn('Storage getMemberPhotoSignedUrl exception:', err?.message || err);
+    // Continue to public URL
   }
 
-  // 2. Fallback: try public URL in case bucket is public or public read policy is active
+  // 5. Try direct public URL (when bucket has public: true)
   try {
     const { data: pubData } = supabase.storage
       .from('member-photos')
@@ -101,7 +130,7 @@ export async function getMemberPhotoSignedUrl(
       return pubData.publicUrl;
     }
   } catch (pubErr) {
-    console.warn('Storage getPublicUrl fallback exception:', pubErr);
+    // Fall through
   }
 
   return null;

@@ -90,19 +90,23 @@ const INITIAL_SAMPLE_MEMBERS: Member[] = [
   }
 ];
 
-// Helper to resolve signed photo URL for protected Supabase storage
+// Helper to resolve display photo URL for Supabase storage or external assets
 async function resolveMemberPhotoUrl(member: Member): Promise<Member> {
-  const photo = member.profile_photo_url || (member as any).photo_path;
-  if (!photo) return member;
-  if (photo.startsWith('http://') || photo.startsWith('https://') || photo.startsWith('data:')) {
+  const photo = (member.profile_photo_url || (member as any).photo_path || '').trim();
+  if (!photo || photo === 'null' || photo === 'undefined') {
+    return { ...member, profile_photo_url: null, photo_path: null };
+  }
+  if (photo.startsWith('data:') || photo.startsWith('blob:') || photo.includes('token=')) {
     return member;
   }
   try {
-    const signed = await getMemberPhotoSignedUrl(photo);
-    if (signed) {
-      return { ...member, profile_photo_url: signed };
+    const resolved = await getMemberPhotoSignedUrl(photo);
+    if (resolved) {
+      return { ...member, profile_photo_url: resolved, photo_path: photo };
     }
-  } catch {}
+  } catch (err) {
+    console.warn('Error in resolveMemberPhotoUrl:', err);
+  }
   return member;
 }
 

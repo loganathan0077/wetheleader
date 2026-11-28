@@ -651,12 +651,15 @@ GRANT EXECUTE ON FUNCTION public.setup_initial_admin(TEXT) TO authenticated;
 
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES 
-    ('member-photos', 'member-photos', false, 5242880, ARRAY['image/jpeg', 'image/png', 'image/webp']),
+    ('member-photos', 'member-photos', true, 5242880, ARRAY['image/jpeg', 'image/png', 'image/webp']),
     ('activity-images', 'activity-images', true, 10485760, ARRAY['image/jpeg', 'image/png', 'image/webp']),
     ('organisation-assets', 'organisation-assets', true, 10485760, ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'])
 ON CONFLICT (id) DO UPDATE
 SET file_size_limit = EXCLUDED.file_size_limit,
-    allowed_mime_types = EXCLUDED.allowed_mime_types;
+    allowed_mime_types = EXCLUDED.allowed_mime_types,
+    public = true;
+
+UPDATE storage.buckets SET public = true WHERE id = 'member-photos';
 
 -- Storage RLS Policies
 -- A. member-photos policies
